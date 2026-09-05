@@ -282,7 +282,7 @@ export default function Leaderboard({
             <input
               value={heroUrl}
               onChange={(e) => setHeroUrl(e.target.value)}
-              placeholder={locale === 'zh' ? 'App Store 链接或应用名…' : 'App Store link or app name…'}
+              placeholder=""
               className="w-full bg-transparent text-[14px] outline-none"
               style={{ color: 'var(--fg)', height: 44 }}
               aria-label={locale === 'zh' ? '工具链接或应用名' : 'Tool URL or app name'}
