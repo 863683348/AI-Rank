@@ -16,6 +16,7 @@ export const en: Partial<Record<DictKey, string>> = {
   'nav.rules': 'Rules',
   'nav.faq': 'FAQ',
   'nav.contact': 'Contact',
+  'nav.about': 'About',
   'nav.admin': 'Admin',
 
   'home.title': 'C-Spot Spotlight',

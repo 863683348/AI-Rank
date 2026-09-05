@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { FAQ, FAQ_META } from '@/lib/i18n/faq';
 import { getServerLocale } from '@/lib/i18n/dict.server';
+import { breadcrumbJsonLd, faqPageJsonLd } from '@/lib/schema-org';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,8 +20,15 @@ export default async function FaqPage() {
   const list = FAQ[locale];
   const meta = FAQ_META[locale];
 
+  const jsonLd = JSON.stringify([
+    faqPageJsonLd(list),
+    breadcrumbJsonLd([{ name: meta.title, path: '/faq' }]),
+  ]).replace(/</g, '\\u003c');
+
   return (
-    <main style={{ maxWidth: '820px', margin: '0 auto', padding: '24px 16px' }}>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
+      <main style={{ maxWidth: '820px', margin: '0 auto', padding: '24px 16px' }}>
       <header style={{ marginBottom: '20px' }}>
         <h1 className="text-xl font-semibold" style={{ letterSpacing: '-0.01em' }}>
           {meta.title}
@@ -53,6 +61,7 @@ export default async function FaqPage() {
           </details>
         ))}
       </section>
-    </main>
+      </main>
+    </>
   );
 }

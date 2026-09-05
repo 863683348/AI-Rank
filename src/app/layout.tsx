@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
 import './globals.css';
 import Nav from '@/components/Nav';
+import Footer from '@/components/Footer';
 import { gtagScript, clarityScript, ga4Id, clarityId } from '@/lib/analytics';
+import { siteGraph } from '@/lib/schema-org';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://toolsrank.lol';
 
@@ -32,8 +34,8 @@ export const metadata: Metadata = {
     'AI 工具竞价排行榜：金额即排名，花小钱上 C 位当显眼包。每一笔透明可审计，每日 00:00 重置。',
   applicationName: 'ToolsRank',
   keywords: ['AI 工具', '竞价排行榜', 'AI 工具导航', '显眼包', 'C 位', 'ToolsRank'],
-  authors: [{ name: 'ToolsRank' }],
-  creator: 'ToolsRank',
+  authors: [{ name: '大飞象 (Dafeixiang)', url: `${SITE_URL}/about` }],
+  creator: '大飞象 (Dafeixiang)',
   publisher: 'ToolsRank',
   robots: { index: true, follow: true },
   openGraph: {
@@ -73,15 +75,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const clarity = clarityScript();
   const ga = ga4Id();
   const cl = clarityId();
+  const siteJsonLd = JSON.stringify(siteGraph()).replace(/</g, '\\u003c');
 
   return (
     <html lang="zh-CN" data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: siteJsonLd }}
+        />
       </head>
       <body>
         <Nav />
         {children}
+        <Footer />
 
         {/* GA4 — 仅生产加载，localhost/preview 不上报 */}
         {ga && gtag && (

@@ -18,6 +18,7 @@ export const zh = {
   'nav.rules': '榜单规则',
   'nav.faq': '常见问题',
   'nav.contact': '联系我',
+  'nav.about': '关于',
   'nav.admin': '审核后台',
 
   // 首页

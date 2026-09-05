@@ -4,6 +4,7 @@ import { desc, eq, and } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import Leaderboard from '@/components/Leaderboard';
 import { isKnownCategory } from '@/lib/categories';
+import { itemListJsonLd } from '@/lib/schema-org';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://toolsrank.lol';
 
@@ -63,44 +64,10 @@ export default async function Home({
         .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
         .limit(100);
 
-  // JSON-LD：Organization + WebSite + ItemList（搜索引擎富卡片）
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': `${SITE_URL}/#org`,
-        name: 'ToolsRank',
-        url: SITE_URL,
-        logo: `${SITE_URL}/icon.svg`,
-        description: 'AI 工具竞价排行榜',
-      },
-      {
-        '@type': 'WebSite',
-        '@id': `${SITE_URL}/#site`,
-        url: SITE_URL,
-        name: 'ToolsRank',
-        inLanguage: 'zh-CN',
-      },
-      {
-        '@type': 'ItemList',
-        name: 'AI 工具竞价排行榜',
-        itemListOrder: 'https://schema.org/ItemListOrderDescending',
-        numberOfItems: rows.length,
-        itemListElement: rows.slice(0, 10).map((r, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          item: {
-            '@type': 'SoftwareApplication',
-            name: r.name,
-            url: r.url,
-            description: r.description ?? undefined,
-            applicationCategory: 'AIApplication',
-          },
-        })),
-      },
-    ],
-  };
+  // JSON-LD：ItemList（Organization/WebSite 由 layout 全站注入，这里不重复）
+  const jsonLd = JSON.stringify(
+    itemListJsonLd(rows),
+  ).replace(/</g, '\\u003c');
 
   return (
     <>
