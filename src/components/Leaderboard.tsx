@@ -31,6 +31,49 @@ type Listing = {
   lastBidAt: string | Date;
 };
 
+type PayChannel = 'yungouos' | 'waffo';
+
+const PAYMENT_CHANNELS: { id: PayChannel; label: string; hint: string }[] = [
+  { id: 'yungouos', label: '微信 / 支付宝扫码', hint: '一码付，扫码即付' },
+  { id: 'waffo', label: '跳转收银台（Waffo）', hint: '跳转式支付，浏览器完成付款' },
+];
+
+function ChannelPicker({
+  value,
+  onChange,
+}: {
+  value: PayChannel;
+  onChange: (v: PayChannel) => void;
+}) {
+  return (
+    <div className="mt-3 grid grid-cols-2 gap-2">
+      {PAYMENT_CHANNELS.map((c) => {
+        const active = value === c.id;
+        return (
+          <button
+            key={c.id}
+            type="button"
+            onClick={() => onChange(c.id)}
+            className="rounded-lg text-left"
+            style={{
+              background: active ? 'var(--accent)' : 'var(--surface-warm)',
+              color: active ? 'var(--accent-on)' : 'var(--fg-2)',
+              border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+              padding: '9px 12px',
+              transition: 'background .15s, border-color .15s',
+            }}
+          >
+            <div className="text-[13px] font-medium">{c.label}</div>
+            <div className="mt-0.5 text-[11px]" style={{ opacity: 0.85 }}>
+              {c.hint}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function Countdown() {
   const [ms, setMs] = useState<number | null>(null);
   useEffect(() => {
@@ -313,6 +356,7 @@ export default function Leaderboard({
 
 function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void }) {
   const [amount, setAmount] = useState(1);
+  const [channel, setChannel] = useState<'yungouos' | 'waffo'>('yungouos');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -325,11 +369,19 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       const res = await fetch(`/api/v1/listings/${listing.id}/bid`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount }),
+        body: JSON.stringify({ amount, channel }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建支付失败');
-      // 把支付链接渲染为二维码（微信/支付宝均可扫）；不在网页内跳转
+
+      if (channel === 'waffo' && data.checkoutUrl) {
+        // Waffo：跳转式支付，直接跳转到收银台完成付款
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      // YunGouOS：渲染二维码
+      if (!data.codeUrl) throw new Error('未获取到支付二维码');
       const dataUrl = await QRCode.toDataURL(data.codeUrl, {
         margin: 1,
         width: 220,
@@ -342,7 +394,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
     } finally {
       setLoading(false);
     }
-  }, [listing.id, amount]);
+  }, [listing.id, amount, channel, onClose]);
 
   if (qrDataUrl) {
     return (
@@ -376,6 +428,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
         当前 {formatMoney(listing.bidAmount)}。支付成功后立即生效，上榜金额 = 累计竞价。
       </p>
+      <ChannelPicker value={channel} onChange={setChannel} />
       <div className="mt-4 flex gap-2">
         {[1, 10, 100].map((v) => (
           <button
@@ -420,17 +473,19 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       >
         {loading ? (
           <Loader2 size={15} className="animate-spin" aria-hidden />
+        ) : channel === 'waffo' ? (
+          <ExternalLink size={15} aria-hidden />
         ) : (
           <QrCode size={15} aria-hidden />
         )}
-        生成微信支付码
+        {loading ? '处理中…' : channel === 'waffo' ? '前往收银台支付' : '生成支付码'}
       </button>
     </Overlay>
   );
 }
 
 function NewListingDialog({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools' });
+  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools', channel: 'yungouos' as PayChannel });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -446,6 +501,14 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建失败');
+
+      // Waffo：跳转式支付
+      if (form.channel === 'waffo' && data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+
+      if (!data.codeUrl) throw new Error('未获取到支付二维码');
       const dataUrl = await QRCode.toDataURL(data.codeUrl, {
         margin: 1,
         width: 220,
@@ -549,6 +612,7 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
           />
         </div>
       </div>
+      <ChannelPicker value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} />
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--danger)' }}>
           {error}
@@ -562,10 +626,12 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
       >
         {loading ? (
           <Loader2 size={15} className="animate-spin" aria-hidden />
+        ) : form.channel === 'waffo' ? (
+          <ExternalLink size={15} aria-hidden />
         ) : (
           <QrCode size={15} aria-hidden />
         )}
-        生成支付码
+        {loading ? '处理中…' : form.channel === 'waffo' ? '前往收银台支付' : '生成支付码'}
       </button>
     </Overlay>
   );

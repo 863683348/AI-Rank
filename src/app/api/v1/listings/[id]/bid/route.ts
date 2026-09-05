@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { createNativeOrder } from '@/lib/yungouos';
+import { createCheckoutSession } from '@/lib/waffo';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export async function POST(
   }
 
   const amount = Number(body.amount);
+  const channel = (body.channel as string) ?? 'yungouos';
   if (!Number.isFinite(amount) || amount < 1 || amount > 100000) {
     return NextResponse.json({ error: '竞价金额范围 1 - 100000' }, { status: 400 });
   }
@@ -29,15 +31,28 @@ export async function POST(
 
   const [bid] = await db
     .insert(bids)
-    .values({ listingId: id, amount: amount.toFixed(2), paymentMethod: 'yungouos' })
+    .values({ listingId: id, amount: amount.toFixed(2), paymentMethod: channel === 'waffo' ? 'waffo' : 'yungouos' })
     .returning();
+
+  if (channel === 'waffo') {
+    const productId = process.env.WAFFO_PRODUCT_ID ?? '';
+    if (!productId) {
+      return NextResponse.json({ error: 'Waffo 未配置 WAFFO_PRODUCT_ID' }, { status: 500 });
+    }
+    const result = await createCheckoutSession({
+      productId,
+      buyerIdentity: bid.id,
+      metadata: { listingId: id, bidId: bid.id, amount: amount.toFixed(2), name: listing.name },
+    });
+    return NextResponse.json({ checkoutUrl: result.checkoutUrl, bidId: bid.id });
+  }
 
   const order = await createNativeOrder({
     outTradeNo: bid.id,
     amount,
     body: `${listing.name} 加价 ¥${amount}`,
     attach: JSON.stringify({ listingId: id, bidId: bid.id }),
-    channel: (body.channel as 'merge' | 'wechat' | 'alipay') ?? 'merge',
+    channel: 'merge',
   });
 
   return NextResponse.json({

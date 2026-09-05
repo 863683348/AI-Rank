@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 import { createNativeOrder } from '@/lib/yungouos';
+import { createCheckoutSession } from '@/lib/waffo';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,16 +68,33 @@ export async function POST(req: NextRequest) {
 
     const [bid] = await db
       .insert(bids)
-      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: 'yungouos' })
+      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: body.channel === 'waffo' ? 'waffo' : 'yungouos' })
       .returning();
 
-    // out_trade_no 用 bid.id（UUID，全局唯一）
+    const channel = (body.channel as string) ?? 'yungouos';
+
+    // 根据渠道选择支付提供商
+    if (channel === 'waffo') {
+      // Waffo：跳转到托管结账页，需要 productId
+      const productId = process.env.WAFFO_PRODUCT_ID ?? '';
+      if (!productId) {
+        return NextResponse.json({ error: 'Waffo 未配置 WAFFO_PRODUCT_ID' }, { status: 500 });
+      }
+      const result = await createCheckoutSession({
+        productId,
+        buyerIdentity: bid.id,
+        metadata: { listingId: listing.id, bidId: bid.id, amount: amount.toFixed(2), name },
+      });
+      return NextResponse.json({ checkoutUrl: result.checkoutUrl, listingId: listing.id, bidId: bid.id });
+    }
+
+    // YunGouOS：生成二维码（一码付，微信/支付宝通用）
     const order = await createNativeOrder({
       outTradeNo: bid.id,
       amount,
       body: `${name} 上榜 ¥${amount}`,
       attach: JSON.stringify({ listingId: listing.id, bidId: bid.id }),
-      channel: (body.channel as 'merge' | 'wechat' | 'alipay') ?? 'merge',
+      channel: 'merge',
     });
 
     return NextResponse.json({
