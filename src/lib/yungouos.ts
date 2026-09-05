@@ -134,7 +134,8 @@ export function verifyWebhookSign(payload: Record<string, string>): YunGouOSNoti
   const expected = signYunGouOS(payload, payKey);
   if (expected !== remoteSign) return null;
 
-  if (payload.status !== '1' && payload.status !== 'SUCCESS') return null;
+  // 文档：code=1 成功，code=0 失败
+  if (payload.code !== '1') return null;
 
   const outTradeNo = payload.out_trade_no;
   const transactionId = payload.transaction_id ?? payload.order_no;
