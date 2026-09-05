@@ -1,10 +1,36 @@
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
+import type { Metadata } from 'next';
 import { formatMoney } from '@/lib/format';
 import { BadgeCheck, ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+/** 动态 SEO metadata */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const [row] = await db
+    .select({ name: listings.name, description: listings.description, bidAmount: listings.bidAmount })
+    .from(listings)
+    .where(eq(listings.id, id))
+    .limit(1);
+  if (!row) {
+    return { title: '工具未找到', description: '该 listing 不存在或已下架。', robots: { index: false } };
+  }
+  const money = formatMoney(row.bidAmount);
+  return {
+    title: `${row.name}（在榜 ${money}）`,
+    description:
+      row.description?.slice(0, 120) ?? `${row.name} 当前在 ToolsRank 竞价榜金额 ${money}`,
+    openGraph: { title: `${row.name} · ToolsRank`, description: `当前在榜金额 ${money}` },
+    alternates: { canonical: `/listing/${id}` },
+  };
+}
 
 /** 北京时间（Asia/Shanghai）YYYY-MM-DD HH:mm，无秒 */
 function beijingTime(iso: string): string {

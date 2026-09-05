@@ -104,3 +104,72 @@ html[data-theme="light"] @keyframes bid-pulse {
 @media (prefers-reduced-motion: reduce) {
   .bid-pulse, .live-dot { animation: none; }
 }
+
+/* ============================================
+   移动端骨架（mobile-first，Spec v1.1 §7）
+   断点：375（SE 档）/ 768（pad）/ 1024（laptop）
+   - 全局 box-sizing 已由 tailwind preflight 处理
+   - 所有页面容器 max-width: 100% + clamp() 流式字号
+   - 触控目标 ≥ 44px（Apple HIG 44pt / Material 48dp 取小）
+   ============================================ */
+
+/* 全局：图片自适应、容器不溢出 */
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+/* 流式响应式字号（clamp：最小/理想/最大） */
+.text-fluid-xs  { font-size: clamp(0.7rem, 0.65rem + 0.3vw, 0.8125rem); }
+.text-fluid-sm  { font-size: clamp(0.8125rem, 0.75rem + 0.4vw, 0.9375rem); }
+.text-fluid-md  { font-size: clamp(0.9375rem, 0.875rem + 0.5vw, 1.0625rem); }
+.text-fluid-lg  { font-size: clamp(1.125rem, 1rem + 0.7vw, 1.375rem); }
+.text-fluid-xl  { font-size: clamp(1.25rem, 1.125rem + 0.8vw, 1.5rem); }
+.text-fluid-2xl { font-size: clamp(1.5rem, 1.25rem + 1.4vw, 2rem); }
+.text-fluid-3xl { font-size: clamp(1.875rem, 1.5rem + 2vw, 2.625rem); }
+.text-fluid-4xl { font-size: clamp(2.25rem, 1.75rem + 2.6vw, 3.25rem); }
+
+/* 触控目标最小尺寸（用于 button / a.tap-target） */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 移动端：底部安全区（iPhone home indicator） */
+.safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+/* 移动端表格：横向滚动包裹 */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 移动端：容器紧凑 padding */
+@media (max-width: 768px) {
+  .container-page { padding-left: 12px !important; padding-right: 12px !important; }
+}
+
+/* 移动端：导航栏横向滚动替代换行 */
+@media (max-width: 640px) {
+  .nav-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .nav-row::-webkit-scrollbar { display: none; }
+}
+
+/* 焦点可见性：键盘可达 */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 6px;
+}
+
+/* 横屏/超窄屏：进一步压缩 */
+@media (max-width: 375px) {
+  html { font-size: 14px; }
+}
