@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import { formatMoney } from '@/lib/format';
 import { BadgeCheck, ExternalLink } from 'lucide-react';
 import { getServerLocale } from '@/lib/i18n/dict.server';
+import AppIcon from '@/components/AppIcon';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,15 +88,6 @@ export default async function ListingDetail({
       )
     : '';
 
-  // 图标：优先用用户填的 iconUrl，否则按域名自动抓 favicon（零存储）
-  let domain = '';
-  try {
-    domain = new URL(listing.url).hostname;
-  } catch {
-    domain = '';
-  }
-  const iconSrc = listing.iconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '');
-
   return (
     <main style={{ maxWidth: '720px', margin: '0 auto', padding: '24px 16px' }}>
       <a href="/" className="text-[13px]" style={{ color: 'var(--accent)' }}>
@@ -107,17 +99,14 @@ export default async function ListingDetail({
         style={{ background: 'var(--surface)', border: '1px solid var(--border)', padding: '20px' }}
       >
         <div className="flex items-start gap-3">
-          {iconSrc && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={iconSrc}
-              alt=""
-              width={44}
-              height={44}
-              className="mt-0.5 shrink-0 rounded-lg"
-              style={{ background: '#fff', border: '1px solid var(--border-soft)' }}
-            />
-          )}
+          <AppIcon
+            name={listing.name}
+            url={listing.url}
+            iconUrl={listing.iconUrl}
+            size={44}
+            className="mt-0.5 rounded-lg"
+            style={{ background: '#fff', border: '1px solid var(--border-soft)' }}
+          />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-semibold" style={{ letterSpacing: '-0.01em' }}>

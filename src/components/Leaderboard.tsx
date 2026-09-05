@@ -26,6 +26,7 @@ import { TOPIC_SLUGS } from '@/lib/topics';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
 import { t, type Locale } from '@/lib/i18n/dict';
 import { useClientLocale } from '@/lib/i18n/dict.client';
+import AppIcon from './AppIcon';
 import Link from 'next/link';
 
 type Listing = {
@@ -95,16 +96,6 @@ function ChannelPicker({
       })}
     </div>
   );
-}
-
-function iconSrcFor(l: Listing): string {
-  if (l.iconUrl) return l.iconUrl;
-  try {
-    const domain = new URL(l.url).hostname;
-    return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
-  } catch {
-    return '';
-  }
 }
 
 function Countdown() {
@@ -595,22 +586,8 @@ export default function Leaderboard({
                 )}
               </div>
 
-              {/* 工具图标（iconUrl 或域名 favicon 兜底） */}
-              {iconSrcFor(l) && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={iconSrcFor(l)}
-                  alt=""
-                  width={featured ? 72 : 40}
-                  height={featured ? 72 : 40}
-                  className="shrink-0 rounded-xl"
-                  style={{
-                    background: 'var(--surface-warm)',
-                    border: '1px solid var(--border)',
-                    objectFit: 'contain',
-                  }}
-                />
-              )}
+              {/* 工具图标（iconUrl → 服务端 favicon 代理 → 首字母色块，永不裂图） */}
+              <AppIcon name={l.name} url={l.url} iconUrl={l.iconUrl} size={featured ? 72 : 40} className="rounded-xl" />
 
               {/* 名称 + 描述 + 点击/时间徽章 */}
               <div className="min-w-0 flex-1">
