@@ -203,6 +203,105 @@ export default async function AboutPage() {
           </table>
         </section>
 
+        {/* ── 打赏区（请作者喝杯咖啡） ────────────────────────────────
+            个人收款码：图片位占位，把微信/支付宝收款码放到：
+              public/qr/wechat-pay.png
+              public/qr/alipay-pay.png
+            图片是否存在由浏览器本地兜底（破图也居中，不会塌版）。
+        */}
+        <section
+          aria-labelledby="about-donate"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 12,
+            padding: '18px 20px',
+            marginTop: 14,
+          }}
+        >
+          <h2
+            id="about-donate"
+            className="text-[15px] font-semibold"
+            style={{ marginTop: 0, marginBottom: 8 }}
+          >
+            {c.donateTitle}
+          </h2>
+          <p className="text-[13px] leading-relaxed" style={{ color: 'var(--fg-2)', marginBottom: 14 }}>
+            {c.donateBody}
+          </p>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 16,
+            }}
+          >
+            {(
+              [
+                { key: 'wechat', label: c.donateWechatLabel, alt: c.donateImgAlt.wechat, src: '/qr/wechat-pay.png' },
+                { key: 'alipay', label: c.donateAlipayLabel, alt: c.donateImgAlt.alipay, src: '/qr/alipay-pay.png' },
+              ] as const
+            ).map((card) => (
+              <div
+                key={card.key}
+                style={{
+                  border: '1px solid var(--border-soft)',
+                  borderRadius: 12,
+                  padding: 16,
+                  background: 'var(--bg)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 10,
+                }}
+              >
+                <div
+                  style={{
+                    width: '100%',
+                    maxWidth: 220,
+                    aspectRatio: '1 / 1',
+                    background: 'var(--surface-warm)',
+                    border: '1px dashed var(--border)',
+                    borderRadius: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    position: 'relative',
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={card.src}
+                    alt={card.alt}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      display: 'block',
+                    }}
+                  />
+                </div>
+                <div
+                  className="text-[13px] font-semibold"
+                  style={{ color: 'var(--fg)' }}
+                >
+                  {card.label}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p
+            className="text-[12px]"
+            style={{ color: 'var(--meta)', marginTop: 14, marginBottom: 0 }}
+          >
+            {c.donateFootnote}
+          </p>
+        </section>
+
         <p className="text-[13px]" style={{ marginTop: 16 }}>
           <Link href="/" style={{ color: 'var(--accent)' }}>
             {zh ? '← 回到榜单' : '← Back to the board'}

@@ -31,6 +31,12 @@ export const ABOUT: Record<
     trustItems: string[];
     factLabel: string;
     facts: { label: string; value: string }[];
+    donateTitle: string;
+    donateBody: string;
+    donateWechatLabel: string;
+    donateAlipayLabel: string;
+    donateFootnote: string;
+    donateImgAlt: { wechat: string; alipay: string };
   }
 > = {
   zh: {
@@ -63,6 +69,14 @@ export const ABOUT: Record<
       { label: '联系邮箱', value: 'ahmedlzany423@gmail.com' },
       { label: '内容更新', value: '榜单实时更新；规则与 FAQ 按需修订' },
     ],
+    donateTitle: '☕ 请作者喝杯咖啡',
+    donateBody:
+      '如果你觉得 ToolsRank 对你有用，欢迎请作者喝杯咖啡。扫码赞助完全自愿，不附条件、不解锁额外功能，仅作为对独立维护的支持。',
+    donateWechatLabel: '微信支付',
+    donateAlipayLabel: '支付宝',
+    donateFootnote:
+      '图位占位：把图片上传到 public/qr/wechat-pay.png 与 public/qr/alipay-pay.png 即可显示。',
+    donateImgAlt: { wechat: '微信支付二维码', alipay: '支付宝收款二维码' },
   },
   en: {
     h1: 'About ToolsRank',
@@ -94,5 +108,13 @@ export const ABOUT: Record<
       { label: 'Contact', value: 'ahmedlzany423@gmail.com' },
       { label: 'Content updates', value: 'Board updates in real time; rules and FAQ revised as needed' },
     ],
+    donateTitle: '☕ Buy me a coffee',
+    donateBody:
+      'If ToolsRank saves you time finding the right AI tools, consider buying me a coffee. Donations are completely voluntary, unlock no extra features, and exist solely to support independent maintenance.',
+    donateWechatLabel: 'WeChat Pay',
+    donateAlipayLabel: 'Alipay',
+    donateFootnote:
+      'QR placeholders: drop your images at public/qr/wechat-pay.png and public/qr/alipay-pay.png to render here.',
+    donateImgAlt: { wechat: 'WeChat Pay QR code', alipay: 'Alipay QR code' },
   },
 };
