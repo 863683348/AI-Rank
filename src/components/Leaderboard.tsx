@@ -13,6 +13,9 @@ import {
   Loader2,
   QrCode,
   Smartphone,
+  Link2,
+  ChevronDown,
+  Eye,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
@@ -33,6 +36,14 @@ type Listing = {
 };
 
 type PayChannel = 'yungouos' | 'waffo';
+
+type RecentBid = {
+  id: string;
+  name: string;
+  amount: string;
+  method: string | null;
+  createdAt: string;
+};
 
 const PAYMENT_CHANNELS: { id: PayChannel; label: string; hint: string }[] = [
   { id: 'waffo', label: '跳转收银台（Waffo）', hint: '跳转式支付，浏览器完成付款' },
@@ -129,6 +140,12 @@ export default function Leaderboard({
   const [bidTarget, setBidTarget] = useState<Listing | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [lifetime, setLifetime] = useState<number | null>(null);
+  const [clicks, setClicks] = useState<number | null>(null);
+  const [todayBids, setTodayBids] = useState<number | null>(null);
+  const [heroAmount, setHeroAmount] = useState(1);
+  const [heroUrl, setHeroUrl] = useState('');
+  const [recentBids, setRecentBids] = useState<RecentBid[]>([]);
+  const [recentOpen, setRecentOpen] = useState(false);
   const pulseRef = useRef<Set<string>>(new Set());
 
   // SSE 实时榜单（共享单例）
@@ -150,53 +167,154 @@ export default function Leaderboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 自上线以来累计进账
+  // 首页聚合数据：累计进账 / 访问 / 今日出价 + 最新出价
   useEffect(() => {
     fetch('/api/v1/stats')
       .then((r) => r.json())
       .then((d) => {
         if (typeof d.lifetime === 'number') setLifetime(d.lifetime);
+        if (typeof d.clicks === 'number') setClicks(d.clicks);
+        if (typeof d.todayBids === 'number') setTodayBids(d.todayBids);
       })
       .catch(() => {});
+    fetch('/api/v1/activity')
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setRecentBids(d);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '24px 16px' }}>
-      {/* 顶栏 */}
-      <header
-        className="flex items-center justify-between rounded-xl"
-        style={{
-          background: 'var(--surface)',
-          border: '1px solid var(--border)',
-          padding: '16px 20px',
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <Trophy size={20} style={{ color: 'var(--accent)' }} aria-hidden />
-          <h1 className="text-lg font-semibold" style={{ letterSpacing: '-0.01em' }}>
-            AI Rank — AI 工具竞价排行榜
-          </h1>
-        </div>
-        <div className="flex items-center gap-4 text-[13px]" style={{ color: 'var(--muted)' }}>
-          <span className="flex items-center gap-1.5">
-            {live ? (
-              <>
-                <span
-                  className="live-dot inline-block h-2 w-2 rounded-full"
-                  style={{ background: 'var(--success)' }}
-                />
-                实时
-              </>
-            ) : (
-              <Activity size={14} aria-hidden />
-            )}
+      {/* HERO：一句话介绍 + 大提交区域 */}
+      <section className="flex flex-col items-center text-center">
+        {/* 顶部信息条：品牌 + 实时 + 访问 + 今日出价 + 实时统计 */}
+        <div
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 rounded-full px-5 py-2"
+          style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+        >
+          <span className="flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: 'var(--fg)' }}>
+            <Trophy size={14} style={{ color: 'var(--accent)' }} aria-hidden />
+            AI Rank
           </span>
-          <span className="flex items-center gap-1.5">
-            <Timer size={14} aria-hidden />
-            重置倒计时 <Countdown />
+          <span className="flex items-center gap-1.5 text-[13px]" style={{ color: 'var(--muted)' }}>
+            <span
+              className="live-dot inline-block h-2 w-2 rounded-full"
+              style={{ background: live ? 'var(--success)' : 'var(--meta)' }}
+            />
+            {live ? '实时在线' : '连接中'}
           </span>
+          {clicks !== null && (
+            <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
+              累计 <b style={{ color: 'var(--fg-2)' }}>{clicks.toLocaleString('zh-CN')}</b> 次访问
+            </span>
+          )}
+          {todayBids !== null && (
+            <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
+              今日 <b style={{ color: 'var(--fg-2)' }}>{todayBids}</b> 笔出价
+            </span>
+          )}
+          <Link
+            href="/stats"
+            className="text-[13px] font-medium"
+            style={{ color: 'var(--accent)', textDecoration: 'none' }}
+          >
+            查看实时统计
+          </Link>
         </div>
-      </header>
+
+        {/* 标题 + 一句话介绍 */}
+        <h1
+          className="mt-6 text-[42px] font-extrabold leading-tight sm:text-[52px]"
+          style={{ color: 'var(--fg)', letterSpacing: '-0.03em' }}
+        >
+          花小钱，让工具上 <span style={{ color: 'var(--accent)' }}>C 位</span>
+        </h1>
+        <p className="mt-4 max-w-[560px] text-[15px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+          出价 ¥1 起。低于 C 位的价格也会上榜——排在你的金额能买到的位置。
+        </p>
+
+        {/* 大提交区域 */}
+        <div
+          className="mt-8 w-full max-w-[520px] rounded-2xl"
+          style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            padding: '22px 22px 18px',
+            boxShadow: '0 12px 40px rgba(37,99,235,.08)',
+          }}
+        >
+          {/* 链接输入 */}
+          <div
+            className="flex items-center gap-2 rounded-xl px-4"
+            style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)', color: 'var(--muted)' }}
+          >
+            <Link2 size={16} aria-hidden />
+            <input
+              value={heroUrl}
+              onChange={(e) => setHeroUrl(e.target.value)}
+              placeholder="App Store 链接或应用名…"
+              className="w-full bg-transparent text-[14px] outline-none"
+              style={{ color: 'var(--fg)', height: 44 }}
+              aria-label="工具链接或应用名"
+            />
+          </div>
+
+          <div className="mt-4 text-center text-[12px]" style={{ color: 'var(--muted)' }}>
+            支付金额
+          </div>
+          {/* 金额步进器 */}
+          <div className="mt-2 flex items-center justify-center gap-5">
+            <button
+              onClick={() => setHeroAmount((m) => Math.max(1, m - 1))}
+              aria-label="减少金额"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-xl font-bold"
+              style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)', color: 'var(--accent)' }}
+            >
+              −
+            </button>
+            <span
+              className="min-w-[90px] font-mono text-[40px] font-bold"
+              style={{ color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}
+            >
+              ¥{heroAmount}
+            </span>
+            <button
+              onClick={() => setHeroAmount((m) => m + 1)}
+              aria-label="增加金额"
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-xl font-bold"
+              style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)', color: 'var(--accent)' }}
+            >
+              +
+            </button>
+          </div>
+
+          <div className="mt-3 text-center text-[12px]" style={{ color: 'var(--muted)' }}>
+            ¥1 起。每日 0 点（中国时区）全员重置为 ¥1，不撤榜，重新抢座位。距重置 <Countdown />
+          </div>
+
+          {/* 抢 C 位 */}
+          <button
+            onClick={() => setShowNew(true)}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl text-[16px] font-bold"
+            style={{
+              background: 'var(--accent)',
+              color: 'var(--accent-on)',
+              padding: '14px 0',
+              boxShadow: '0 8px 24px rgba(37,99,235,.32)',
+            }}
+          >
+            <Plus size={18} aria-hidden />
+            抢 C 位
+          </button>
+
+          <p className="mt-4 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
+            已经上榜？再提交同一个链接即可加价——只收差价。
+          </p>
+        </div>
+      </section>
 
       {/* 已进账横幅（自上线以来） */}
       {lifetime !== null && (
@@ -230,6 +348,56 @@ export default function Leaderboard({
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>自上线以来</div>
         </section>
       )}
+
+      {/* 最新出价（公开审计流，可折叠） */}
+      <section
+        className="mt-4 rounded-xl"
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+      >
+        <button
+          onClick={() => setRecentOpen((o) => !o)}
+          className="flex w-full items-center justify-between px-5 py-4"
+        >
+          <span className="flex items-center gap-2 text-[14px] font-semibold" style={{ color: 'var(--fg)' }}>
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'var(--success)' }} />
+            最新出价
+          </span>
+          <span className="flex items-center gap-1 text-[13px]" style={{ color: 'var(--muted)' }}>
+            {recentBids.length} 笔
+            <ChevronDown
+              size={15}
+              aria-hidden
+              style={{ transform: recentOpen ? 'rotate(180deg)' : 'none', transition: 'transform .15s' }}
+            />
+          </span>
+        </button>
+        {recentOpen && (
+          <div className="flex flex-col gap-3 border-t px-5 py-4" style={{ borderColor: 'var(--border)' }}>
+            {recentBids.length === 0 ? (
+              <div className="text-[13px]" style={{ color: 'var(--muted)' }}>
+                还没有出价，抢先占 C 位。
+              </div>
+            ) : (
+              recentBids.map((b) => (
+                <div key={b.id} className="flex items-center justify-between text-[13px]">
+                  <span className="truncate" style={{ color: 'var(--fg-2)', flex: 1, marginRight: 12 }}>
+                    {b.name}
+                  </span>
+                  <span
+                    className="shrink-0 font-mono font-semibold"
+                    style={{ color: 'var(--accent)', marginRight: 12 }}
+                  >
+                    +¥{Number(b.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                  </span>
+                  <span className="shrink-0" style={{ color: 'var(--meta)' }}>
+                    {timeAgo(new Date(b.createdAt).toISOString())}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </section>
 
       {/* 机制说明 */}
       <p className="mt-3 text-[13px]" style={{ color: 'var(--muted)' }}>
@@ -398,7 +566,12 @@ export default function Leaderboard({
               {/* 名称 + 描述 + 点击/时间徽章 */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-[15px] font-semibold">{l.name}</span>
+                  <span
+                    className="truncate"
+                    style={{ fontSize: 18, fontWeight: 700, color: 'var(--fg)', letterSpacing: '-0.01em' }}
+                  >
+                    {l.name}
+                  </span>
                   <a
                     href={`/api/v1/click/${l.id}`}
                     target="_blank"
@@ -452,42 +625,64 @@ export default function Leaderboard({
                 >
                   {formatMoney(l.bidAmount)}
                 </div>
-                <button
-                  onClick={() => setBidTarget(l)}
-                  className="flex items-center gap-1.5 rounded-lg text-[13px] font-semibold transition-transform hover:-translate-y-0.5"
-                  style={{
-                    background: 'var(--accent)',
-                    color: 'var(--accent-on)',
-                    padding: '8px 16px',
-                    boxShadow: '0 2px 8px rgba(37,99,235,.25)',
-                  }}
-                >
-                  <TrendingUp size={14} aria-hidden />
-                  加价
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/listing/${l.id}`}
+                    className="flex items-center gap-1.5 rounded-lg text-[13px] font-medium transition-transform hover:-translate-y-0.5"
+                    style={{
+                      background: 'var(--surface-warm)',
+                      color: 'var(--fg-2)',
+                      border: '1px solid var(--border)',
+                      padding: '8px 12px',
+                    }}
+                  >
+                    <Eye size={14} aria-hidden />
+                    查看详情
+                  </Link>
+                  <button
+                    onClick={() => setBidTarget(l)}
+                    className="flex items-center gap-1.5 rounded-lg text-[13px] font-bold transition-transform hover:-translate-y-0.5"
+                    style={{
+                      background: 'var(--accent)',
+                      color: 'var(--accent-on)',
+                      padding: '8px 14px',
+                      boxShadow: '0 2px 8px rgba(37,99,235,.25)',
+                    }}
+                  >
+                    <TrendingUp size={14} aria-hidden />
+                    抢你的名次
+                  </button>
+                </div>
               </div>
             </div>
           </article>
         ))}
       </section>
 
-      {/* 上架入口 */}
+      {/* 上架入口 — 突出 */}
       <button
         onClick={() => setShowNew(true)}
-        className="mx-auto mt-6 flex items-center gap-2 rounded-full text-sm font-medium"
+        className="mx-auto mt-8 flex items-center gap-2 rounded-full text-[15px] font-semibold transition-transform hover:-translate-y-0.5"
         style={{
-          background: 'var(--surface-warm)',
-          color: 'var(--fg-2)',
-          border: '1px solid var(--border)',
-          padding: '10px 20px',
+          background: 'var(--accent)',
+          color: 'var(--accent-on)',
+          border: 'none',
+          padding: '14px 28px',
+          boxShadow: '0 8px 28px rgba(37,99,235,.35)',
         }}
       >
-        <Plus size={15} aria-hidden />
+        <Plus size={18} aria-hidden />
         提交你的工具，上 C 位当显眼包（¥1 起）
       </button>
 
       {bidTarget && <BidDialog listing={bidTarget} onClose={() => setBidTarget(null)} />}
-      {showNew && <NewListingDialog onClose={() => setShowNew(false)} />}
+      {showNew && (
+        <NewListingDialog
+          onClose={() => setShowNew(false)}
+          initialUrl={heroUrl}
+          initialAmount={heroAmount}
+        />
+      )}
     </main>
   );
 }
@@ -636,8 +831,23 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
   );
 }
 
-function NewListingDialog({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools', channel: 'waffo' as PayChannel });
+function NewListingDialog({
+  onClose,
+  initialUrl = '',
+  initialAmount = 1,
+}: {
+  onClose: () => void;
+  initialUrl?: string;
+  initialAmount?: number;
+}) {
+  const [form, setForm] = useState({
+    url: initialUrl,
+    name: '',
+    description: '',
+    amount: initialAmount,
+    category: 'ai-tools',
+    channel: 'waffo' as PayChannel,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
