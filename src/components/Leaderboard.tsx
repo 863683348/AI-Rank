@@ -17,12 +17,14 @@ import {
   ChevronDown,
   Eye,
   BadgeCheck,
+  Wallet,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import { CATEGORIES } from '@/lib/categories';
 import { TOPIC_SLUGS } from '@/lib/topics';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
+import { useClientLocale, t } from '@/lib/i18n/dict';
 import Link from 'next/link';
 
 type Listing = {
@@ -152,15 +154,29 @@ export default function Leaderboard({
   const [recentBids, setRecentBids] = useState<RecentBid[]>([]);
   const [recentOpen, setRecentOpen] = useState(false);
   const pulseRef = useRef<Set<string>>(new Set());
+  const catRef = useRef<string | null | undefined>(activeCategory);
+  const locale = useClientLocale();
 
-  // SSE 实时榜单（共享单例）
+  // 分类切换（软导航）：同步分类引用 + 用服务端新数据重置本地榜单
+  useEffect(() => {
+    catRef.current = activeCategory;
+    setBoard(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCategory, initial]);
+
+  // SSE 实时榜单（共享单例）；带分类筛选时必须在客户端二次过滤，
+  // 否则全量推送会在 2 秒内覆盖服务端渲染的分类结果
   useEffect(() => {
     const offBoard = subscribeBoard((data) => {
+      const cat = catRef.current;
       const prev = new Map(board.map((l) => [l.id, l.bidAmount]));
+      const incoming = cat
+        ? data.listings.filter((l) => l.category === cat)
+        : data.listings;
       pulseRef.current = new Set(
-        data.listings.filter((l) => prev.get(l.id) !== l.bidAmount).map((l) => l.id)
+        incoming.filter((l) => prev.get(l.id) !== l.bidAmount).map((l) => l.id)
       );
-      setBoard(data.listings);
+      setBoard(incoming);
     });
     const offLive = subscribeLive(() => setLive(true));
     const offError = subscribeError(() => setLive(false));
@@ -235,10 +251,16 @@ export default function Leaderboard({
           className="mt-6 text-[42px] font-extrabold leading-tight sm:text-[52px]"
           style={{ color: 'var(--fg)', letterSpacing: '-0.03em' }}
         >
-          花小钱，让工具上 <span style={{ color: 'var(--accent)' }}>C 位</span>
+          {locale === 'zh' ? (
+            <>花小钱，让工具上 <span style={{ color: 'var(--accent)' }}>C 位</span></>
+          ) : (
+            <>Bid ¥1+, get your tool on the <span style={{ color: 'var(--accent)' }}>C-spot</span></>
+          )}
         </h1>
         <p className="mt-4 max-w-[560px] text-[15px] leading-relaxed" style={{ color: 'var(--muted)' }}>
-          出价 ¥1 起。低于 C 位的价格也会上榜——排在你的金额能买到的位置。
+          {locale === 'zh'
+            ? '出价 ¥1 起。低于 C 位的价格也会上榜——排在你的金额能买到的位置。'
+            : 'Start at ¥1. Lower bids still make the board—you rank where your bid can afford.'}
         </p>
 
         {/* 大提交区域 */}
@@ -458,25 +480,34 @@ export default function Leaderboard({
             榜单还是空的。提交你的 AI 工具，¥1 起竞价，立刻占据 C 位。
           </div>
         )}
-        {board.map((l, i) => (
+        {board.map((l, i) => {
+          const featured = i < 3;
+          return (
           <article
             key={l.id}
-            className={`group ${pulseRef.current.has(l.id) ? 'bid-pulse rounded-xl' : 'rounded-xl'}`}
+            className={`group ${pulseRef.current.has(l.id) ? 'bid-pulse rounded-2xl' : 'rounded-2xl'}`}
             style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              padding: '14px 18px',
+              background: featured
+                ? i === 0
+                  ? 'linear-gradient(135deg, rgba(255,213,79,.10), rgba(255,160,0,.04))'
+                  : 'linear-gradient(135deg, var(--surface), var(--surface-warm))'
+                : 'var(--surface)',
+              border: featured ? '1.5px solid rgba(255,213,79,.45)' : '1px solid var(--border)',
+              padding: featured ? '22px 24px' : '14px 18px',
               position: 'relative',
               overflow: 'visible',
               transition: 'border-color .15s, box-shadow .15s',
+              boxShadow: featured ? '0 8px 32px rgba(255,160,0,.08)' : 'none',
             }}
             onMouseEnter={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)';
-              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(37,99,235,.15)';
+              (e.currentTarget as HTMLElement).style.boxShadow = featured
+                ? '0 12px 40px rgba(255,160,0,.18)'
+                : '0 4px 20px rgba(37,99,235,.15)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
-              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+              (e.currentTarget as HTMLElement).style.borderColor = featured ? 'rgba(255,213,79,.45)' : 'var(--border)';
+              (e.currentTarget as HTMLElement).style.boxShadow = featured ? '0 8px 32px rgba(255,160,0,.08)' : 'none';
             }}
           >
             {/* 悬浮提示：最后出价时间 / 当前金额 / 已进账总额 */}
@@ -518,16 +549,16 @@ export default function Leaderboard({
                 {formatMoney(l.lifetimeAmount)}
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              {/* 排名徽章：前三名金银铜圆形 */}
-              <div className="flex shrink-0 items-center justify-center" style={{ width: 48 }}>
+            <div className={featured ? 'flex items-center gap-5' : 'flex items-center gap-4'}>
+              {/* 排名徽章：前三名金银铜大圆形，4+ 用字号 */}
+              <div className="flex shrink-0 items-center justify-center" style={{ width: featured ? 88 : 48 }}>
                 {i < 3 ? (
                   <div
                     className="flex items-center justify-center rounded-full font-mono font-extrabold"
                     style={{
-                      width: 44,
-                      height: 44,
-                      fontSize: 20,
+                      width: featured ? 80 : 44,
+                      height: featured ? 80 : 44,
+                      fontSize: featured ? (i === 0 ? 40 : 34) : 20,
                       background:
                         i === 0
                           ? 'linear-gradient(135deg, #ffd54f, #ffa000)'
@@ -535,8 +566,8 @@ export default function Leaderboard({
                           ? 'linear-gradient(135deg, #e8eaed, #9aa0a6)'
                           : 'linear-gradient(135deg, #d2956b, #8a5a2b)',
                       color: i === 1 ? '#2a2a2a' : '#fff',
-                      boxShadow: '0 2px 10px rgba(0,0,0,.18)',
-                      textShadow: i === 1 ? 'none' : '0 1px 1px rgba(0,0,0,.18)',
+                      boxShadow: featured ? '0 6px 24px rgba(255,160,0,.35)' : '0 2px 10px rgba(0,0,0,.18)',
+                      textShadow: i === 1 ? 'none' : '0 2px 2px rgba(0,0,0,.18)',
                     }}
                     aria-label={`第 ${i + 1} 名`}
                   >
@@ -558,9 +589,9 @@ export default function Leaderboard({
                 <img
                   src={iconSrcFor(l)}
                   alt=""
-                  width={40}
-                  height={40}
-                  className="shrink-0 rounded-lg"
+                  width={featured ? 72 : 40}
+                  height={featured ? 72 : 40}
+                  className="shrink-0 rounded-xl"
                   style={{
                     background: 'var(--surface-warm)',
                     border: '1px solid var(--border)',
@@ -574,7 +605,12 @@ export default function Leaderboard({
                 <div className="flex items-center gap-2">
                   <span
                     className="truncate"
-                    style={{ fontSize: 18, fontWeight: 700, color: 'var(--fg)', letterSpacing: '-0.01em' }}
+                    style={{
+                      fontSize: featured ? 26 : 18,
+                      fontWeight: 700,
+                      color: 'var(--fg)',
+                      letterSpacing: '-0.01em',
+                    }}
                   >
                     {l.name}
                   </span>
@@ -601,15 +637,18 @@ export default function Leaderboard({
                     className="shrink-0"
                     style={{ color: 'var(--meta)' }}
                   >
-                    <ExternalLink size={13} aria-hidden />
+                    <ExternalLink size={featured ? 16 : 13} aria-hidden />
                   </a>
                 </div>
                 {l.description && (
-                  <p className="truncate text-[13px]" style={{ color: 'var(--muted)' }}>
+                  <p
+                    className={featured ? 'mt-1 text-[14px] leading-relaxed' : 'truncate text-[13px]'}
+                    style={{ color: 'var(--muted)', display: featured ? '-webkit-box' : 'block', WebkitLineClamp: featured ? 2 : 1, WebkitBoxOrient: 'vertical' as any, overflow: featured ? 'hidden' : 'clip' }}
+                  >
                     {l.description}
                   </p>
                 )}
-                <div className="mt-1.5 flex items-center gap-2">
+                <div className={featured ? 'mt-2 flex items-center gap-2.5' : 'mt-1.5 flex items-center gap-2'}>
                   <span
                     className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]"
                     style={{
@@ -628,6 +667,20 @@ export default function Leaderboard({
                     <Timer size={12} aria-hidden />
                     {timeAgo(new Date(l.lastBidAt).toISOString())}
                   </span>
+                  {featured && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]"
+                      style={{
+                        background: 'rgba(255,160,0,.10)',
+                        border: '1px solid rgba(255,160,0,.30)',
+                        color: '#ff6a00',
+                      }}
+                      title="已进账总额"
+                    >
+                      <Wallet size={12} aria-hidden />
+                      {formatMoney(l.lifetimeAmount)}
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -636,17 +689,17 @@ export default function Leaderboard({
                 <div
                   className="font-mono font-extrabold"
                   style={{
-                    fontSize: i < 3 ? 'clamp(24px, 4vw, 30px)' : 'clamp(20px, 3vw, 24px)',
+                    fontSize: featured ? (i === 0 ? 'clamp(38px, 6vw, 52px)' : 'clamp(32px, 5vw, 44px)') : 'clamp(20px, 3vw, 24px)',
                     lineHeight: 1.1,
                     letterSpacing: '-0.02em',
-                    color: i < 3 ? '#ff6a00' : 'var(--fg-2)',
+                    color: '#ff6a00',
                     fontVariantNumeric: 'tabular-nums',
-                    textShadow: i < 3 ? '0 0 12px rgba(255,106,0,.18)' : 'none',
+                    textShadow: '0 0 16px rgba(255,106,0,.20)',
                   }}
                 >
                   {formatMoney(l.bidAmount)}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className={featured ? 'flex items-center gap-3' : 'flex items-center gap-2'}>
                   <Link
                     href={`/listing/${l.id}`}
                     className="flex items-center gap-1.5 rounded-lg text-[13px] font-medium transition-transform hover:-translate-y-0.5"
@@ -654,11 +707,12 @@ export default function Leaderboard({
                       background: 'var(--surface-warm)',
                       color: 'var(--fg-2)',
                       border: '1px solid var(--border)',
-                      padding: '8px 12px',
+                      padding: featured ? '10px 16px' : '8px 12px',
+                      fontSize: featured ? 14 : 13,
                     }}
                   >
-                    <Eye size={14} aria-hidden />
-                    查看详情
+                    <Eye size={featured ? 16 : 14} aria-hidden />
+                    {locale === 'zh' ? '查看详情' : 'View'}
                   </Link>
                   <button
                     onClick={() => setBidTarget(l)}
@@ -666,18 +720,20 @@ export default function Leaderboard({
                     style={{
                       background: 'var(--accent)',
                       color: 'var(--accent-on)',
-                      padding: '8px 14px',
-                      boxShadow: '0 2px 8px rgba(37,99,235,.25)',
+                      padding: featured ? '10px 18px' : '8px 14px',
+                      boxShadow: featured ? '0 4px 16px rgba(37,99,235,.35)' : '0 2px 8px rgba(37,99,235,.25)',
+                      fontSize: featured ? 14 : 13,
                     }}
                   >
-                    <TrendingUp size={14} aria-hidden />
-                    抢你的名次
+                    <TrendingUp size={featured ? 16 : 14} aria-hidden />
+                    {locale === 'zh' ? '抢你的名次' : 'Steal this rank'}
                   </button>
                 </div>
               </div>
             </div>
           </article>
-        ))}
+          );
+        })}
       </section>
 
       {/* 上架入口 — 突出 */}
