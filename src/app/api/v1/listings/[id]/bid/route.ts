@@ -38,12 +38,26 @@ export async function POST(
     if (!productId) {
       return NextResponse.json({ error: 'Waffo 未配置 WAFFO_PRODUCT_ID' }, { status: 500 });
     }
-    const result = await createCheckoutSession({
-      productId,
-      buyerIdentity: bid.id,
-      metadata: { listingId: id, bidId: bid.id, amount: amount.toFixed(2), name: listing.name },
-    });
-    return NextResponse.json({ checkoutUrl: result.checkoutUrl, bidId: bid.id });
+    try {
+      const result = await createCheckoutSession({
+        productId,
+        buyerIdentity: bid.id,
+        // B 方案：加价金额实时传入（Waffo priceSnapshot 覆盖后台产品价）
+        amount: amount.toFixed(2),
+        metadata: { listingId: id, bidId: bid.id, amount: amount.toFixed(2), name: listing.name },
+      });
+      return NextResponse.json({ checkoutUrl: result.checkoutUrl, bidId: bid.id });
+    } catch (e) {
+      // 支付通道失败：删除脏 bid 记录 + 返回 502 引导用户重试
+      // bid 已写库但未支付成功，留着会污染榜单统计
+      await db.delete(bids).where(eq(bids.id, bid.id));
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error('[bid] Waffo checkout failed:', msg);
+      return NextResponse.json(
+        { error: '支付通道暂时不可用，请稍后重试', detail: msg },
+        { status: 502 },
+      );
+    }
   }
 
   // YunGouOS 已弃用：V1.2 起主推 Waffo 美元通道

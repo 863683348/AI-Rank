@@ -81,6 +81,21 @@ export async function createCheckoutSession(params: {
     // 支付成功后的跳转地址
     successUrl: `${appUrl}/success`,
   });
+
+  // SDK unwrapAction 在响应不是 Waffo 标准 envelope（如网关层 404、CDN 拦截）
+  // 时不会抛错，而是返回 undefined 字段拼成 `"undefined#token=undefined"`。
+  // 这里做完整性校验：URL 必须包含协议 + 有效 token，否则抛错让上层 catch。
+  if (
+    !result.checkoutUrl ||
+    !result.checkoutUrl.startsWith('http') ||
+    result.checkoutUrl.includes('undefined') ||
+    !result.token
+  ) {
+    throw new Error(
+      `Waffo 返回异常 checkoutUrl（可能 base URL 不可达 / API Key 环境不匹配 / productId 失效）：${result.checkoutUrl ?? '(空)'}`,
+    );
+  }
+
   return { checkoutUrl: result.checkoutUrl };
 }
 
