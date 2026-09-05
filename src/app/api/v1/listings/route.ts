@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { createNativeOrder } from '@/lib/yungouos';
 import { createCheckoutSession } from '@/lib/waffo';
+import { validateUrl, scanSafety, decideStatus } from '@/lib/listingGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,7 @@ export async function GET() {
       lastBidAt: listings.lastBidAt,
     })
     .from(listings)
+    .where(eq(listings.status, 'approved'))
     .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
     .limit(100);
 
@@ -52,6 +54,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '竞价金额范围 1 - 100000' }, { status: 400 });
   }
 
+  // 阶段1：URL 硬校验 + 内容安全扫描
+  const urlCheck = validateUrl(url);
+  if (!urlCheck.ok) return NextResponse.json({ error: urlCheck.reason ?? '链接不合法' }, { status: 400 });
+  const nameSafety = scanSafety(name);
+  if (!nameSafety.ok) return NextResponse.json({ error: nameSafety.reason ?? '名称含违规内容' }, { status: 400 });
+  const descSafety = scanSafety(body.description ?? '');
+  if (!descSafety.ok) return NextResponse.json({ error: descSafety.reason ?? '描述含违规内容' }, { status: 400 });
+
+  // 阶段2：可信域名自动放行，其余落人工审核（真正兜底闸门在 /admin）
+  const { status, verified } = decideStatus(url);
+
   // 同 URL 幂等：数据库唯一索引 uniq_listings_url 兜底，冲突时 409 引导加价
   try {
     const [listing] = await db
@@ -61,10 +74,21 @@ export async function POST(req: NextRequest) {
         name,
         description: body.description?.slice(0, 200) ?? null,
         iconUrl: body.iconUrl ?? null,
-        bidAmount: amount.toFixed(2),
-        lifetimeAmount: amount.toFixed(2),
+        bidAmount: status === 'approved' ? amount.toFixed(2) : '1.00',
+        lifetimeAmount: status === 'approved' ? amount.toFixed(2) : '1.00',
+        status,
+        verified,
       })
       .returning();
+
+    // 待人工审核：不创建支付，提示等待审核
+    if (status === 'pending') {
+      return NextResponse.json({
+        status: 'pending',
+        message: '已提交，待人工审核。审核通过后即可支付上 C 位，我们会尽快处理。',
+        listingId: listing.id,
+      });
+    }
 
     const [bid] = await db
       .insert(bids)

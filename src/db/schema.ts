@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, decimal, integer, timestamp, date, bigint, uniqueIndex, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, decimal, integer, timestamp, date, bigint, boolean, uniqueIndex, index } from 'drizzle-orm/pg-core';
 
 /**
  * listings — 榜单核心表
@@ -6,6 +6,8 @@ import { pgTable, uuid, text, decimal, integer, timestamp, date, bigint, uniqueI
  * lifetime_amount: 累计投入（不受重置影响）
  * last_bid_at: 同额时后出价者靠前的排序依据
  * board_version: SSE 推送依据，任何竞价生效 +1
+ * status: pending(待审核) | approved(在榜) | rejected(被拒)
+ * verified: 是否命中可信源（域名白名单/目录）自动放行
  */
 export const listings = pgTable('listings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -22,9 +24,13 @@ export const listings = pgTable('listings', {
   boardVersion: bigint('board_version', { mode: 'number' }).notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  status: text('status').notNull().default('pending'),
+  reviewReason: text('review_reason'),
+  verified: boolean('verified').notNull().default(false),
 }, (t) => [
   uniqueIndex('uniq_listings_url').on(t.url),
   index('idx_listings_rank').on(t.bidAmount, t.lastBidAt),
+  index('idx_listings_status').on(t.status),
 ]);
 
 /** bids — 出价记录（公开审计） */

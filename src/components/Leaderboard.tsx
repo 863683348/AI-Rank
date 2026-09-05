@@ -852,6 +852,7 @@ function NewListingDialog({
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [pendingMsg, setPendingMsg] = useState<string | null>(null);
 
   const submit = useCallback(async () => {
     setLoading(true);
@@ -864,6 +865,12 @@ function NewListingDialog({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建失败');
+
+      // 待人工审核：提示用户等待，不进入支付
+      if (data.status === 'pending') {
+        setPendingMsg(data.message ?? '已提交，待人工审核…');
+        return;
+      }
 
       // Waffo：先弹出收银台确认卡片，点击按钮再跳转收银台
       if (form.channel === 'waffo' && data.checkoutUrl) {
@@ -891,6 +898,32 @@ function NewListingDialog({
     color: 'var(--fg)',
     padding: '9px 12px',
   } as const;
+
+  if (pendingMsg) {
+    return (
+      <Overlay onClose={onClose}>
+        <div className="flex flex-col items-center text-center">
+          <div
+            className="flex h-12 w-12 items-center justify-center rounded-full"
+            style={{ background: 'rgba(245,158,11,.12)' }}
+          >
+            <Timer size={22} style={{ color: 'var(--warn)' }} aria-hidden />
+          </div>
+          <h2 className="mt-3 text-base font-semibold">已提交，待审核</h2>
+          <p className="mt-2 text-[13px] leading-relaxed" style={{ color: 'var(--muted)' }}>
+            {pendingMsg}
+          </p>
+          <button
+            onClick={onClose}
+            className="mt-4 w-full rounded-lg text-sm font-medium"
+            style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
+          >
+            知道了
+          </button>
+        </div>
+      </Overlay>
+    );
+  }
 
   if (checkoutUrl) {
     return (

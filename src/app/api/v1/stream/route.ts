@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/db';
 import { listings } from '@/db/schema';
-import { desc, gt } from 'drizzle-orm';
+import { desc, gt, eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
                 lastBidAt: listings.lastBidAt,
               })
               .from(listings)
+              .where(eq(listings.status, 'approved'))
               .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
               .limit(100);
             send('board', { listings: board, version: lastVersion });

@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { listings } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import Leaderboard from '@/components/Leaderboard';
 import { isKnownCategory } from '@/lib/categories';
 
@@ -28,7 +28,7 @@ export default async function Home({
           lastBidAt: listings.lastBidAt,
         })
         .from(listings)
-        .where(eq(listings.category, filter))
+        .where(and(eq(listings.category, filter), eq(listings.status, 'approved')))
         .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
         .limit(100)
     : await db
@@ -44,6 +44,7 @@ export default async function Home({
           lastBidAt: listings.lastBidAt,
         })
         .from(listings)
+        .where(eq(listings.status, 'approved'))
         .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
         .limit(100);
 
