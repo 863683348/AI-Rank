@@ -16,7 +16,8 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
-import ThemeToggle from '@/components/ThemeToggle';
+import { CATEGORIES } from '@/lib/categories';
+import Link from 'next/link';
 
 type Listing = {
   id: string;
@@ -49,7 +50,13 @@ function Countdown() {
   );
 }
 
-export default function Leaderboard({ initial }: { initial: Listing[] }) {
+export default function Leaderboard({
+  initial,
+  activeCategory,
+}: {
+  initial: Listing[];
+  activeCategory?: string | null;
+}) {
   const [board, setBoard] = useState<Listing[]>(initial);
   const [live, setLive] = useState(false);
   const [bidTarget, setBidTarget] = useState<Listing | null>(null);
@@ -108,7 +115,6 @@ export default function Leaderboard({ initial }: { initial: Listing[] }) {
             <Timer size={14} aria-hidden />
             重置倒计时 <Countdown />
           </span>
-          <ThemeToggle />
         </div>
       </header>
 
@@ -116,6 +122,44 @@ export default function Leaderboard({ initial }: { initial: Listing[] }) {
       <p className="mt-3 text-[13px]" style={{ color: 'var(--muted)' }}>
         金额即排名，花小钱上 C 位、当显眼包；每一笔公开可审计。每日 00:00（北京时间）在榜金额重置为 ¥1，条目与点击数保留。
       </p>
+
+      {/* 分类筛选 */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Link
+          href="/"
+          style={{
+            textDecoration: 'none',
+            fontSize: 12,
+            padding: '5px 11px',
+            borderRadius: 999,
+            color: activeCategory ? 'var(--muted)' : 'var(--accent-on)',
+            background: activeCategory ? 'var(--surface-warm)' : 'var(--accent)',
+            border: '1px solid var(--border)',
+          }}
+        >
+          全部
+        </Link>
+        {CATEGORIES.map((c) => {
+          const active = activeCategory === c.slug;
+          return (
+            <Link
+              key={c.slug}
+              href={`/?cat=${c.slug}`}
+              style={{
+                textDecoration: 'none',
+                fontSize: 12,
+                padding: '5px 11px',
+                borderRadius: 999,
+                color: active ? 'var(--accent-on)' : 'var(--muted)',
+                background: active ? 'var(--accent)' : 'var(--surface-warm)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              {c.label}
+            </Link>
+          );
+        })}
+      </div>
 
       {/* 榜单 */}
       <section className="mt-4 flex flex-col gap-2">
@@ -336,7 +380,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
 }
 
 function NewListingDialog({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1 });
+  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -422,6 +466,24 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
           style={field}
           aria-label="一句话介绍"
         />
+        <div className="flex items-center gap-2">
+          <span className="text-[13px] shrink-0" style={{ color: 'var(--muted)', width: 52 }}>
+            分类
+          </span>
+          <select
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            className="w-full rounded-lg text-sm outline-none"
+            style={field}
+            aria-label="工具分类"
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
             首次竞价

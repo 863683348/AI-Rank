@@ -29,7 +29,7 @@ export async function GET() {
 
 /** POST /api/v1/listings — 新工具上架（创建 listing + 待支付 bid → 微信扫码） */
 export async function POST(req: NextRequest) {
-  let body: { url?: string; name?: string; description?: string; iconUrl?: string; amount?: number; channel?: string };
+  let body: { url?: string; name?: string; description?: string; iconUrl?: string; amount?: number; channel?: string; category?: string };
   try {
     body = await req.json();
   } catch {
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   const url = (body.url ?? '').trim();
   const name = (body.name ?? '').trim();
   const amount = Number(body.amount ?? 1);
+  const category = body.category && /^[a-z0-9-]{2,20}$/.test(body.category) ? body.category : 'ai-tools';
 
   if (!/^https:\/\/.+\..+/.test(url)) {
     return NextResponse.json({ error: 'url 必须是 https 链接' }, { status: 400 });
