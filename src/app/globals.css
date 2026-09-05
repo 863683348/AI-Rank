@@ -1,7 +1,11 @@
 @import "tailwindcss";
 
-/* Design Tokens（Design-AI-Rank.md A1-identity + A2） */
-:root {
+/* Design Tokens（Design-AI-Rank.md A1-identity + A2）
+   默认主题：dark。light 在 [data-theme="light"] 下覆盖。
+   切换由 ThemeToggle 客户端组件 + layout.tsx 内联同步脚本控制。 */
+
+:root,
+[data-theme="dark"] {
   --bg: #08090a;
   --surface: #0f1011;
   --fg: #f7f8f8;
@@ -18,6 +22,8 @@
   --danger: #dc2626;
   --accent-hover: color-mix(in srgb, var(--accent) 92%, black);
   --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  --overlay-backdrop: rgba(0, 0, 0, 0.6);
   --motion-fast: 150ms;
   --motion-base: 200ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -25,21 +31,61 @@
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
+[data-theme="light"] {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #0b0c0d;
+  --muted: #5b6470;
+  --fg-2: #1f242c;
+  --meta: #8a8f98;
+  --surface-warm: #eef0f3;
+  --accent: #1d4ed8;
+  --accent-on: #ffffff;
+  --border: rgba(11, 12, 13, 0.08);
+  --border-soft: rgba(11, 12, 13, 0.04);
+  --success: #15803d;
+  --warn: #b45309;
+  --danger: #b91c1c;
+  --accent-hover: color-mix(in srgb, var(--accent) 92%, black);
+  --focus-ring: 0 0 0 3px rgba(29, 78, 216, 0.25);
+  --shadow-card: 0 1px 2px rgba(11, 12, 13, 0.04), 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  --overlay-backdrop: rgba(11, 12, 13, 0.45);
+}
+
 html {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-body);
+  color-scheme: dark;
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* 主题切换过渡：仅在显式启用时生效，避免初次加载产生闪烁 */
+html.theme-ready,
+html.theme-ready * {
+  transition: background-color var(--motion-base) var(--ease-standard),
+              color var(--motion-base) var(--ease-standard),
+              border-color var(--motion-base) var(--ease-standard);
 }
 
 /* 竞价行：金额变化脉冲 */
 @keyframes bid-pulse {
   0% { background: rgba(37, 99, 235, 0.25); }
+  100% { background: transparent; }
+}
+html[data-theme="light"] @keyframes bid-pulse {
+  0% { background: rgba(29, 78, 216, 0.18); }
   100% { background: transparent; }
 }
 .bid-pulse {

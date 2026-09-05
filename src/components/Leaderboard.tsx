@@ -13,6 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
+import ThemeToggle from '@/components/ThemeToggle';
 
 type Listing = {
   id: string;
@@ -104,6 +105,7 @@ export default function Leaderboard({ initial }: { initial: Listing[] }) {
             <Timer size={14} aria-hidden />
             重置倒计时 <Countdown />
           </span>
+          <ThemeToggle />
         </div>
       </header>
 
