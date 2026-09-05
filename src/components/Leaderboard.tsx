@@ -24,7 +24,7 @@ import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import { CATEGORIES, categoryLabel } from '@/lib/categories';
 import { TOPIC_SLUGS } from '@/lib/topics';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
-import { t } from '@/lib/i18n/dict';
+import { t, type Locale } from '@/lib/i18n/dict';
 import { useClientLocale } from '@/lib/i18n/dict.client';
 import Link from 'next/link';
 
@@ -51,16 +51,22 @@ type RecentBid = {
   createdAt: string;
 };
 
-const PAYMENT_CHANNELS: { id: PayChannel; label: string; hint: string }[] = [
-  { id: 'waffo', label: '跳转收银台（Waffo）', hint: '跳转式支付，浏览器完成付款' },
+const PAYMENT_CHANNELS: { id: PayChannel; label: Record<Locale, string>; hint: Record<Locale, string> }[] = [
+  {
+    id: 'waffo',
+    label: { zh: '跳转收银台（Waffo）', en: 'Waffo checkout' },
+    hint: { zh: '跳转式支付，浏览器完成付款', en: 'Redirect pay, done in browser' },
+  },
 ];
 
 function ChannelPicker({
   value,
   onChange,
+  locale,
 }: {
   value: PayChannel;
   onChange: (v: PayChannel) => void;
+  locale: Locale;
 }) {
   return (
     <div className="mt-3 grid grid-cols-2 gap-2">
@@ -80,9 +86,9 @@ function ChannelPicker({
               transition: 'background .15s, border-color .15s',
             }}
           >
-            <div className="text-[13px] font-medium">{c.label}</div>
+            <div className="text-[13px] font-medium">{c.label[locale]}</div>
             <div className="mt-0.5 text-[11px]" style={{ opacity: 0.85 }}>
-              {c.hint}
+              {c.hint[locale]}
             </div>
           </button>
         );
@@ -226,16 +232,18 @@ export default function Leaderboard({
               className="live-dot inline-block h-2 w-2 rounded-full"
               style={{ background: live ? 'var(--success)' : 'var(--meta)' }}
             />
-            {live ? '实时在线' : '连接中'}
+            {live ? (locale === 'zh' ? '实时在线' : 'Live') : (locale === 'zh' ? '连接中' : 'Connecting')}
           </span>
           {clicks !== null && (
             <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
-              累计 <b style={{ color: 'var(--fg-2)' }}>{clicks.toLocaleString('zh-CN')}</b> 次访问
+              {locale === 'zh' ? '累计' : 'Total'}{' '}<b style={{ color: 'var(--fg-2)' }}>{clicks.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US')}</b>{' '}
+              {locale === 'zh' ? '次访问' : 'visits'}
             </span>
           )}
           {todayBids !== null && (
             <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
-              今日 <b style={{ color: 'var(--fg-2)' }}>{todayBids}</b> 笔出价
+              {locale === 'zh' ? '今日' : 'Today'}{' '}<b style={{ color: 'var(--fg-2)' }}>{todayBids}</b>{' '}
+              {locale === 'zh' ? '笔出价' : 'bids'}
             </span>
           )}
           <Link
@@ -243,7 +251,7 @@ export default function Leaderboard({
             className="text-[13px] font-medium"
             style={{ color: 'var(--accent)', textDecoration: 'none' }}
           >
-            查看实时统计
+            {locale === 'zh' ? '查看实时统计' : 'Live stats'}
           </Link>
         </div>
 
@@ -283,21 +291,21 @@ export default function Leaderboard({
             <input
               value={heroUrl}
               onChange={(e) => setHeroUrl(e.target.value)}
-              placeholder="App Store 链接或应用名…"
+              placeholder={locale === 'zh' ? 'App Store 链接或应用名…' : 'App Store link or app name…'}
               className="w-full bg-transparent text-[14px] outline-none"
               style={{ color: 'var(--fg)', height: 44 }}
-              aria-label="工具链接或应用名"
+              aria-label={locale === 'zh' ? '工具链接或应用名' : 'Tool URL or app name'}
             />
           </div>
 
           <div className="mt-4 text-center text-[12px]" style={{ color: 'var(--muted)' }}>
-            支付金额
+            {locale === 'zh' ? '支付金额' : 'Bid amount'}
           </div>
           {/* 金额步进器 */}
           <div className="mt-2 flex items-center justify-center gap-5">
             <button
               onClick={() => setHeroAmount((m) => Math.max(1, m - 1))}
-              aria-label="减少金额"
+              aria-label={locale === 'zh' ? '减少金额' : 'Decrease amount'}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-xl font-bold"
               style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)', color: 'var(--accent)' }}
             >
@@ -311,7 +319,7 @@ export default function Leaderboard({
             </span>
             <button
               onClick={() => setHeroAmount((m) => m + 1)}
-              aria-label="增加金额"
+              aria-label={locale === 'zh' ? '增加金额' : 'Increase amount'}
               className="flex h-10 w-10 items-center justify-center rounded-xl text-xl font-bold"
               style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)', color: 'var(--accent)' }}
             >
@@ -320,7 +328,8 @@ export default function Leaderboard({
           </div>
 
           <div className="mt-3 text-center text-[12px]" style={{ color: 'var(--muted)' }}>
-            ¥1 起。每日 0 点（中国时区）全员重置为 ¥1，不撤榜，重新抢座位。距重置 <Countdown />
+            {locale === 'zh' ? '¥1 起。每日 0 点（中国时区）全员重置为 ¥1，不撤榜，重新抢座位。距重置' : 'Start at ¥1. Daily 00:00 (China tz) everyone resets to ¥1 — the board stays, seats are re-fought. Reset in'}{' '}
+            <Countdown />
           </div>
 
           {/* 抢 C 位 */}
@@ -335,11 +344,11 @@ export default function Leaderboard({
             }}
           >
             <Plus size={18} aria-hidden />
-            抢 C 位
+            {locale === 'zh' ? '抢 C 位' : 'Grab the C-spot'}
           </button>
 
           <p className="mt-4 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
-            已经上榜？再提交同一个链接即可加价——只收差价。
+            {locale === 'zh' ? '已经上榜？再提交同一个链接即可加价——只收差价。' : 'Already listed? Resubmit the same URL to raise your bid — you only pay the difference.'}
           </p>
         </div>
       </section>
@@ -357,7 +366,7 @@ export default function Leaderboard({
           }}
         >
           <div style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '.02em' }}>
-            这个小小的榜单已进账
+            {locale === 'zh' ? '这个小小的榜单已进账' : 'This little board has taken in'}
           </div>
           <div
             className="font-mono font-bold"
@@ -369,11 +378,11 @@ export default function Leaderboard({
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
             }}
-            aria-label={`自上线以来已进账 ${formatMoney(lifetime, locale)}`}
+            aria-label={`${locale === 'zh' ? '自上线以来已进账' : 'Taken in since launch'} ${formatMoney(lifetime, locale)}`}
           >
             {formatMoney(lifetime, locale)}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--muted)' }}>自上线以来</div>
+          <div className="text-center text-[12px]" style={{ color: 'var(--muted)' }}>{locale === 'zh' ? '自上线以来' : 'since launch'} </div>
         </section>
       )}
 
@@ -447,7 +456,7 @@ export default function Leaderboard({
             border: '1px solid var(--border)',
           }}
         >
-          全部
+          {locale === 'zh' ? '全部' : 'All'}
         </Link>
         {CATEGORIES.map((c) => {
           const active = activeCategory === c.slug;
@@ -480,7 +489,7 @@ export default function Leaderboard({
             className="rounded-xl p-10 text-center text-sm"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}
           >
-            榜单还是空的。提交你的 AI 工具，¥1 起竞价，立刻占据 C 位。
+            {locale === 'zh' ? '榜单还是空的。提交你的 AI 工具，¥1 起竞价，立刻占据 C 位。' : 'The board is empty. Submit your AI tool, bid from ¥1, and grab the C-spot in seconds.'}
           </div>
         )}
         {board.map((l, i) => {
@@ -534,19 +543,19 @@ export default function Leaderboard({
               className="group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
             >
               <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4, letterSpacing: '.02em' }}>
-                最后出价
+                {locale === 'zh' ? '最后出价' : 'Last bid'}
               </div>
               <div style={{ fontSize: 13, color: 'var(--fg)', marginBottom: 8 }}>
                 {new Date(l.lastBidAt).toLocaleString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.02em' }}>
-                当前金额
+                {locale === 'zh' ? '当前金额' : 'Current bid'}
               </div>
               <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--accent)', marginBottom: 8, fontVariantNumeric: 'tabular-nums' }}>
                 {formatMoney(l.bidAmount, locale)}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.02em' }}>
-                已进账总额
+                {locale === 'zh' ? '已进账总额' : 'Total taken'}
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}>
                 {formatMoney(l.lifetimeAmount, locale)}
@@ -572,7 +581,7 @@ export default function Leaderboard({
                       boxShadow: featured ? '0 6px 24px rgba(255,160,0,.35)' : '0 2px 10px rgba(0,0,0,.18)',
                       textShadow: i === 1 ? 'none' : '0 2px 2px rgba(0,0,0,.18)',
                     }}
-                    aria-label={`第 ${i + 1} 名`}
+                    aria-label={locale === 'zh' ? `第 ${i + 1} 名` : `#${i + 1}`}
                   >
                     {i + 1}
                   </div>
@@ -625,18 +634,18 @@ export default function Leaderboard({
                         color: 'var(--success)',
                         border: '1px solid rgba(34,197,94,.3)',
                       }}
-                      title="已通过域名白名单校验"
-                      aria-label="已认证"
+                      title={locale === 'zh' ? '已通过域名白名单校验' : 'Passed domain allowlist'}
+                      aria-label={locale === 'zh' ? '已认证' : 'Verified'}
                     >
                       <BadgeCheck size={11} aria-hidden />
-                      已认证
+                      {locale === 'zh' ? '已认证' : 'Verified'}
                     </span>
                   )}
                   <a
                     href={`/api/v1/click/${l.id}`}
                     target="_blank"
                     rel="noopener nofollow"
-                    aria-label={`访问 ${l.name}`}
+                    aria-label={locale === 'zh' ? `访问 ${l.name}` : `Visit ${l.name}`}
                     className="shrink-0"
                     style={{ color: 'var(--meta)' }}
                   >
@@ -678,7 +687,7 @@ export default function Leaderboard({
                         border: '1px solid rgba(255,160,0,.30)',
                         color: '#ff6a00',
                       }}
-                      title="已进账总额"
+                      title={locale === 'zh' ? '已进账总额' : 'Total taken in'}
                     >
                       <Wallet size={12} aria-hidden />
                       {formatMoney(l.lifetimeAmount, locale)}
@@ -752,7 +761,7 @@ export default function Leaderboard({
         }}
       >
         <Plus size={18} aria-hidden />
-        提交你的工具，上 C 位当显眼包（¥1 起）
+        {locale === 'zh' ? '提交你的工具，上 C 位当显眼包（¥1 起）' : 'Submit your tool & grab the C-spot spotlight (from ¥1)'}
       </button>
 
       {bidTarget && <BidDialog listing={bidTarget} onClose={() => setBidTarget(null)} />}
@@ -819,8 +828,9 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
         amount={payingAmount ?? amount}
         checkoutUrl={checkoutUrl}
         onClose={onClose}
-        title="前往 Waffo 收银台支付"
-        note="点击下方按钮将在新窗口打开托管收银台完成付款"
+        locale={locale}
+        title={locale === 'zh' ? '前往 Waffo 收银台支付' : 'Go to Waffo checkout'}
+        note={locale === 'zh' ? '点击下方按钮将在新窗口打开托管收银台完成付款' : 'Click below to open the hosted checkout in a new window'}
       />
     );
   }
@@ -828,24 +838,24 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
   if (qrDataUrl) {
     return (
       <Overlay onClose={onClose}>
-        <h2 className="text-base font-semibold">微信扫码支付 {formatMoney(payingAmount ?? 0, locale)}</h2>
+        <h2 className="text-base font-semibold">{locale === 'zh' ? '微信扫码支付' : 'WeChat QR pay'} {formatMoney(payingAmount ?? 0, locale)}</h2>
         <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
-          打开微信扫一扫，支付成功后将自动上榜。榜单通过 SSE 实时刷新，不用刷新页面。
+          {locale === 'zh' ? '打开微信扫一扫，支付成功后将自动上榜。榜单通过 SSE 实时刷新，不用刷新页面。' : 'Scan with WeChat. Once paid you\'ll be listed automatically. The board refreshes live via SSE — no page reload needed.'}
         </p>
         <div className="mt-4 flex justify-center rounded-xl p-4" style={{ background: '#fff' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrDataUrl} alt="微信支付二维码" width={220} height={220} />
+          <img src={qrDataUrl} alt={locale === 'zh' ? '微信支付二维码' : 'WeChat payment QR'} width={220} height={220} />
         </div>
         <div className="mt-3 flex items-center justify-center gap-2 text-[13px]" style={{ color: 'var(--muted)' }}>
           <Smartphone size={14} aria-hidden />
-          扫码后回到此页面即可，无需停留
+          {locale === 'zh' ? '扫码后回到此页面即可，无需停留' : 'Return here after scanning — no need to stay'}
         </div>
         <button
           onClick={onClose}
           className="mt-4 w-full rounded-lg text-sm font-medium"
           style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
         >
-          我已支付 / 关闭
+          {locale === 'zh' ? '我已支付 / 关闭' : 'I\'ve paid / Close'}
         </button>
       </Overlay>
     );
@@ -853,11 +863,11 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
 
   return (
     <Overlay onClose={onClose}>
-      <h2 className="text-base font-semibold">给「{listing.name}」加价</h2>
+      <h2 className="text-base font-semibold">{locale === 'zh' ? `给「${listing.name}」加价` : `Raise bid on “${listing.name}”`}</h2>
       <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
-        当前 {formatMoney(listing.bidAmount, locale)}。支付成功后立即生效，上榜金额 = 累计竞价。
+        {locale === 'zh' ? `当前 ${formatMoney(listing.bidAmount, locale)}。支付成功后立即生效，上榜金额 = 累计竞价。` : `Current ${formatMoney(listing.bidAmount, locale)}. Takes effect immediately — your bid equals total ranking amount.`}
       </p>
-      <ChannelPicker value={channel} onChange={setChannel} />
+      <ChannelPicker value={channel} onChange={setChannel} locale={locale} />
       <div className="mt-4 flex gap-2">
         {[1, 10, 100].map((v) => (
           <button
@@ -887,7 +897,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
           color: 'var(--fg)',
           padding: '10px 14px',
         }}
-        aria-label="竞价金额"
+        aria-label={locale === 'zh' ? '竞价金额' : 'Bid amount'}
       />
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--danger)' }}>
@@ -907,7 +917,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
         ) : (
           <QrCode size={15} aria-hidden />
         )}
-        {loading ? '处理中…' : channel === 'waffo' ? '前往收银台支付' : '生成支付码'}
+        {loading ? (locale === 'zh' ? '处理中…' : 'Processing…') : channel === 'waffo' ? (locale === 'zh' ? '前往收银台支付' : 'Go to checkout') : (locale === 'zh' ? '生成支付码' : 'Generate QR')}
       </button>
     </Overlay>
   );
@@ -994,7 +1004,7 @@ function NewListingDialog({
           >
             <Timer size={22} style={{ color: 'var(--warn)' }} aria-hidden />
           </div>
-          <h2 className="mt-3 text-base font-semibold">已提交，待审核</h2>
+          <h2 className="mt-3 text-base font-semibold">{locale === 'zh' ? '已提交，待审核' : 'Submitted — pending review'}</h2>
           <p className="mt-2 text-[13px] leading-relaxed" style={{ color: 'var(--muted)' }}>
             {pendingMsg}
           </p>
@@ -1003,7 +1013,7 @@ function NewListingDialog({
             className="mt-4 w-full rounded-lg text-sm font-medium"
             style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
           >
-            知道了
+            {locale === 'zh' ? '知道了' : 'Got it'}
           </button>
         </div>
       </Overlay>
@@ -1016,8 +1026,9 @@ function NewListingDialog({
         amount={form.amount}
         checkoutUrl={checkoutUrl}
         onClose={onClose}
-        title="前往 Waffo 收银台支付"
-        note="点击下方按钮将在新窗口打开托管收银台完成付款"
+        locale={locale}
+        title={locale === 'zh' ? '前往 Waffo 收银台支付' : 'Go to Waffo checkout'}
+        note={locale === 'zh' ? '点击下方按钮将在新窗口打开托管收银台完成付款' : 'Click below to open the hosted checkout in a new window'}
       />
     );
   }
@@ -1025,20 +1036,20 @@ function NewListingDialog({
   if (qrDataUrl) {
     return (
       <Overlay onClose={onClose}>
-        <h2 className="text-base font-semibold">扫码上榜 {formatMoney(form.amount, locale)}</h2>
+        <h2 className="text-base font-semibold">{locale === 'zh' ? '扫码上榜' : 'Scan & get listed'} {formatMoney(form.amount, locale)}</h2>
         <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
-          微信或支付宝扫一扫均可，支付成功后立即上榜 C 位。榜单通过 SSE 实时刷新。
+          {locale === 'zh' ? '微信或支付宝扫一扫均可，支付成功后立即上榜 C 位。榜单通过 SSE 实时刷新。' : 'Scan with WeChat or Alipay. Once paid you\'ll hit the C-spot instantly. The board refreshes live via SSE.'}
         </p>
         <div className="mt-4 flex justify-center rounded-xl p-4" style={{ background: '#fff' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrDataUrl} alt="支付二维码（微信/支付宝）" width={220} height={220} />
+          <img src={qrDataUrl} alt={locale === 'zh' ? '支付二维码（微信/支付宝）' : 'Payment QR (WeChat/Alipay)'} width={220} height={220} />
         </div>
         <button
           onClick={onClose}
           className="mt-4 w-full rounded-lg text-sm font-medium"
           style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
         >
-          我已支付 / 关闭
+          {locale === 'zh' ? '我已支付 / 关闭' : 'I\'ve paid / Close'}
         </button>
       </Overlay>
     );
@@ -1046,42 +1057,42 @@ function NewListingDialog({
 
   return (
     <Overlay onClose={onClose}>
-      <h2 className="text-base font-semibold">提交新工具</h2>
+      <h2 className="text-base font-semibold">{locale === 'zh' ? '提交新工具' : 'Submit a tool'}</h2>
       <div className="mt-4 flex flex-col gap-3">
         <input
-          placeholder="https:// 你的工具链接"
+          placeholder={locale === 'zh' ? 'https:// 你的工具链接' : 'https:// your tool URL'}
           value={form.url}
           onChange={(e) => setForm({ ...form, url: e.target.value })}
           className="w-full rounded-lg text-sm outline-none"
           style={field}
-          aria-label="工具链接"
+          aria-label={locale === 'zh' ? '工具链接' : 'Tool URL'}
         />
         <input
-          placeholder="工具名称（60 字内）"
+          placeholder={locale === 'zh' ? '工具名称（60 字内）' : 'Tool name (max 60 chars)'}
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           className="w-full rounded-lg text-sm outline-none"
           style={field}
-          aria-label="工具名称"
+          aria-label={locale === 'zh' ? '工具名称' : 'Tool name'}
         />
         <input
-          placeholder="一句话介绍（可选）"
+          placeholder={locale === 'zh' ? '一句话介绍（可选）' : 'One-line description (optional)'}
           value={form.description}
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           className="w-full rounded-lg text-sm outline-none"
           style={field}
-          aria-label="一句话介绍"
+          aria-label={locale === 'zh' ? '一句话介绍' : 'Description'}
         />
         <div className="flex items-center gap-2">
           <span className="text-[13px] shrink-0" style={{ color: 'var(--muted)', width: 52 }}>
-            分类
+            {locale === 'zh' ? '分类' : 'Category'}
           </span>
           <select
             value={form.category}
             onChange={(e) => setForm({ ...form, category: e.target.value })}
             className="w-full rounded-lg text-sm outline-none"
             style={field}
-            aria-label="工具分类"
+            aria-label={locale === 'zh' ? '工具分类' : 'Tool category'}
           >
             {CATEGORIES.map((c) => (
               <option key={c.slug} value={c.slug}>
@@ -1092,7 +1103,7 @@ function NewListingDialog({
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[13px]" style={{ color: 'var(--muted)' }}>
-            首次竞价
+            {locale === 'zh' ? '首次竞价' : 'Starting bid'}
           </span>
           <input
             type="number"
@@ -1101,11 +1112,11 @@ function NewListingDialog({
             onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
             className="w-28 rounded-lg font-mono text-sm outline-none"
             style={field}
-            aria-label="首次竞价金额"
+            aria-label={locale === 'zh' ? '首次竞价金额' : 'Starting bid amount'}
           />
         </div>
       </div>
-      <ChannelPicker value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} />
+      <ChannelPicker value={form.channel} onChange={(v) => setForm({ ...form, channel: v })} locale={locale} />
       {error && (
         <p className="mt-2 text-[13px]" style={{ color: 'var(--danger)' }}>
           {error}
@@ -1124,7 +1135,7 @@ function NewListingDialog({
         ) : (
           <QrCode size={15} aria-hidden />
         )}
-        {loading ? '处理中…' : form.channel === 'waffo' ? '前往收银台支付' : '生成支付码'}
+        {loading ? (locale === 'zh' ? '处理中…' : 'Processing…') : form.channel === 'waffo' ? (locale === 'zh' ? '前往收银台支付' : 'Go to checkout') : (locale === 'zh' ? '生成支付码' : 'Generate QR')}
       </button>
     </Overlay>
   );
@@ -1136,12 +1147,14 @@ function CheckoutCard({
   onClose,
   title,
   note,
+  locale,
 }: {
   amount: number;
   checkoutUrl: string;
   onClose: () => void;
   title: string;
   note: string;
+  locale: Locale;
 }) {
   return (
     <Overlay onClose={onClose}>
@@ -1153,19 +1166,19 @@ function CheckoutCard({
       {/* 收款卡片：白底、居中、大号金额 */}
       <div className="mt-4 rounded-xl p-6 text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
         <div className="text-[12px] font-medium" style={{ color: '#9a9aa2' }}>
-          应付金额
+          {locale === 'zh' ? '应付金额' : 'Amount due'}
         </div>
         <div className="mt-1 font-mono text-[32px] font-bold" style={{ color: '#14161f', letterSpacing: '-0.02em' }}>
-          ¥{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+          ¥{amount.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { minimumFractionDigits: 2 })}
         </div>
         <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium" style={{ background: '#0d6efd', color: '#fff' }}>
           <Activity size={14} aria-hidden />
-          Waffo 安全收银台
+          {locale === 'zh' ? 'Waffo 安全收银台' : 'Waffo Secure Checkout'}
         </div>
       </div>
 
       <p className="mt-4 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
-        点击下方按钮前往受限收银台完成付款，金额以收银台为准。
+        {locale === 'zh' ? '点击下方按钮前往受限收银台完成付款，金额以收银台为准。' : 'Click below to finish payment on the hosted checkout. The amount shown there is final.'}
       </p>
 
       <button
@@ -1177,12 +1190,12 @@ function CheckoutCard({
         style={{ background: 'var(--accent)', color: 'var(--accent-on)', padding: '11px 0' }}
       >
         <ExternalLink size={15} aria-hidden />
-        前往收银台支付
+        {locale === 'zh' ? '前往收银台支付' : 'Go to checkout'}
       </button>
 
       <div className="mt-3 flex items-center justify-center gap-2 text-[12px]" style={{ color: 'var(--meta)' }}>
         <Loader2 size={13} className="animate-spin" aria-hidden />
-        支付完成后自动回到榜单并立即上榜
+        {locale === 'zh' ? '支付完成后自动回到榜单并立即上榜' : 'You\'ll return to the board and be listed automatically once paid'}
       </div>
     </Overlay>
   );

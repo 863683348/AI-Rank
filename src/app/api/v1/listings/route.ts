@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { createNativeOrder } from '@/lib/yungouos';
 import { createCheckoutSession } from '@/lib/waffo';
 import { validateUrl, scanSafety, decideStatus } from '@/lib/listingGuard';
 import { notifyNewPending } from '@/lib/notify';
@@ -101,10 +100,10 @@ export async function POST(req: NextRequest) {
 
     const [bid] = await db
       .insert(bids)
-      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: body.channel === 'waffo' ? 'waffo' : 'yungouos' })
+      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: (body.channel ?? 'waffo') === 'waffo' ? 'waffo' : 'yungouos' })
       .returning();
 
-    const channel = (body.channel as string) ?? 'yungouos';
+    const channel = (body.channel as string) ?? 'waffo';
 
     // 根据渠道选择支付提供商
     if (channel === 'waffo') {
@@ -121,21 +120,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ checkoutUrl: result.checkoutUrl, listingId: listing.id, bidId: bid.id });
     }
 
-    // YunGouOS：生成二维码（一码付，微信/支付宝通用）
-    const order = await createNativeOrder({
-      outTradeNo: bid.id,
-      amount,
-      body: `${name} 上榜 ¥${amount}`,
-      attach: JSON.stringify({ listingId: listing.id, bidId: bid.id }),
-      channel: 'merge',
-    });
-
-    return NextResponse.json({
-      codeUrl: order.codeUrl,
-      qrCodeImgUrl: order.qrCodeImgUrl,
-      listingId: listing.id,
-      bidId: bid.id,
-    });
+    // YunGouOS 已弃用：V1.2 起主推 Waffo 美元通道；保留代码以兼容历史请求
+    return NextResponse.json(
+      { error: '国内支付已下线，请用 Waffo 国际卡支付（Visa/Master/海外钱包）' },
+      { status: 410 },
+    );
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes('uniq_listings_url')) {

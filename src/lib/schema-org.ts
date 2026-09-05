@@ -16,7 +16,7 @@ export const SITE_NAME = 'ToolsRank';
 export const FOUNDER = {
   name: '大飞象',
   alternateName: 'Dafeixiang',
-  email: '863683348@qq.com',
+  email: 'ahmedlzany423@gmail.com',
   github: 'https://github.com/863683348',
   wechatAccount: '大飞象的智能体2025',
   communityName: '大飞象AI陪你成长',

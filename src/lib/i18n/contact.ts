@@ -15,8 +15,8 @@ export const CONTACTS: Record<Locale, ContactItem[]> = {
   zh: [
     {
       label: '商务 / 合作邮箱',
-      value: '863683348@qq.com',
-      href: 'mailto:863683348@qq.com',
+      value: 'ahmedlzany423@gmail.com',
+      href: 'mailto:ahmedlzany423@gmail.com',
       ctaLabel: '发邮件',
     },
     {
@@ -35,8 +35,8 @@ export const CONTACTS: Record<Locale, ContactItem[]> = {
   en: [
     {
       label: 'Business / partnerships',
-      value: '863683348@qq.com',
-      href: 'mailto:863683348@qq.com',
+      value: 'ahmedlzany423@gmail.com',
+      href: 'mailto:ahmedlzany423@gmail.com',
       ctaLabel: 'Send email',
     },
     {

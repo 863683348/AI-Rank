@@ -1,17 +1,38 @@
 import type { Locale } from './i18n/dict';
 
 /**
- * 金额格式化：按 locale 切换币种符号，**数字不变，仅换单位**
- * - zh: ¥1,234.56
- * - en: $1,234.56
+ * V1.2 起：金额单位统一为美元（USD）。
+ * - zh 页：DB 美元值 × USD→CNY 汇率 → 显示 ¥
+ * - en 页：DB 美元值直接显示 $
+ * - 用户实际付的都是美元（标价 ₿N × 汇率 仅供阅读参考）
  *
- * 「已进账部分按实际计算」语义：金额原值即 DB 里的 yungouos 实收人民币数，
- * 不做汇率换算；英文页显示的 $ 仅为符号占位（与人民币数值相同）。
+ * 汇率来源（优先级）：
+ *   1. 环境变量 USD_CNY_RATE（推荐：cron 每日刷一次）
+ *   2. 默认 7.20（≈ 当前 USD/CNY 中间价近似值，仅作兜底）
+ *
+ * 接法（待办）：
+ *   - V1.3 cron 抓 frankfurter.app / open.er-api.com 写入 settings 表
+ *   - 现在先用 env，符合「先能跑，再追精度」
+ */
+const USD_CNY = Number.parseFloat(
+  process.env.USD_CNY_RATE ?? '7.20',
+) || 7.20;
+
+export function getUsdToCnyRate(): number {
+  return USD_CNY;
+}
+
+/**
+ * 金额格式化（V1.2）
+ * @param v DB 存的美元数值（number 或 numeric string）
+ * @param locale 'zh' | 'en'
+ * @returns zh=¥N.NN（已乘汇率） / en=$N.NN
  */
 export function formatMoney(v: string | number, locale: Locale = 'zh'): string {
   const n = typeof v === 'string' ? parseFloat(v) : v;
   if (!Number.isFinite(n)) return locale === 'zh' ? '¥0.00' : '$0.00';
-  const numStr = n.toLocaleString('en-US', {
+  const display = locale === 'zh' ? n * USD_CNY : n;
+  const numStr = display.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

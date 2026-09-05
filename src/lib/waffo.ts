@@ -29,6 +29,8 @@ export function getClient(): WaffoPancake {
 
 /**
  * 创建 Checkout Session
+ *
+ * V1.2 起：默认按美元（USD）结算，zh 显示按汇率换算成 ¥。
  * @returns { checkoutUrl }
  */
 export async function createCheckoutSession(params: {
@@ -39,14 +41,15 @@ export async function createCheckoutSession(params: {
   metadata?: Record<string, string>;
 }): Promise<{ checkoutUrl: string }> {
   const client = getClient();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://toolsrank.ai';
   const result = await client.checkout.authenticated.create({
     productId: params.productId,
-    currency: params.currency ?? 'CNY',
+    currency: params.currency ?? 'USD',
     buyerIdentity: params.buyerIdentity,
     buyerEmail: params.buyerEmail,
     metadata: params.metadata,
     // 支付成功后的跳转地址
-    successUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://ai-rank-sigma.vercel.app'}/success`,
+    successUrl: `${appUrl}/success`,
   });
   return { checkoutUrl: result.checkoutUrl };
 }

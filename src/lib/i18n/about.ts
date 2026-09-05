@@ -53,14 +53,14 @@ export const ABOUT: Record<
     trustItems: [
       '不刷量：我们不伪装成自然流量，「付费曝光」写在明面上，规则页可查。',
       '可审计：出价记录永久公开，任何人对账无需联系客服。',
-      '可联系：商务与合作直接发邮件 863683348@qq.com，人在回复。',
+      '可联系：商务与合作直接发邮件 ahmedlzany423@gmail.com，人在回复。',
       '来源可查：运营者身份、GitHub 仓库、社交账号全部实名公开（见下方名片）。',
     ],
     factLabel: '站点档案',
     facts: [
       { label: '上线时间', value: '2026 年' },
       { label: '运营者', value: '大飞象（Dafeixiang）' },
-      { label: '联系邮箱', value: '863683348@qq.com' },
+      { label: '联系邮箱', value: 'ahmedlzany423@gmail.com' },
       { label: '内容更新', value: '榜单实时更新；规则与 FAQ 按需修订' },
     ],
   },
@@ -84,14 +84,14 @@ export const ABOUT: Record<
     trustItems: [
       'No fake traffic: paid placement is stated plainly on the Rules page — nothing disguised as organic.',
       'Auditable: bid records are permanently public; anyone can reconcile them without contacting support.',
-      'Reachable: business inquiries go to 863683348@qq.com and are answered by a human.',
+      'Reachable: business inquiries go to ahmedlzany423@gmail.com and are answered by a human.',
       'Verifiable identity: operator identity, GitHub repos, and social accounts are all public (see the profile card below).',
     ],
     factLabel: 'Site facts',
     facts: [
       { label: 'Launched', value: '2026' },
       { label: 'Operator', value: 'Dafeixiang (大飞象)' },
-      { label: 'Contact', value: '863683348@qq.com' },
+      { label: 'Contact', value: 'ahmedlzany423@gmail.com' },
       { label: 'Content updates', value: 'Board updates in real time; rules and FAQ revised as needed' },
     ],
   },
