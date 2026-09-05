@@ -34,7 +34,6 @@ type Listing = {
 type PayChannel = 'yungouos' | 'waffo';
 
 const PAYMENT_CHANNELS: { id: PayChannel; label: string; hint: string }[] = [
-  { id: 'yungouos', label: '微信 / 支付宝扫码', hint: '一码付，扫码即付' },
   { id: 'waffo', label: '跳转收银台（Waffo）', hint: '跳转式支付，浏览器完成付款' },
 ];
 
@@ -356,7 +355,7 @@ export default function Leaderboard({
 
 function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void }) {
   const [amount, setAmount] = useState(1);
-  const [channel, setChannel] = useState<'yungouos' | 'waffo'>('yungouos');
+  const [channel, setChannel] = useState<'yungouos' | 'waffo'>('waffo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -485,7 +484,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
 }
 
 function NewListingDialog({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools', channel: 'yungouos' as PayChannel });
+  const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1, category: 'ai-tools', channel: 'waffo' as PayChannel });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
