@@ -77,7 +77,8 @@ export default function Nav() {
                   whiteSpace: 'nowrap',
                   color: active ? 'var(--accent-on)' : 'var(--muted)',
                   background: active ? 'var(--accent)' : 'transparent',
-                  transition: 'background .15s, color .15s',
+                  transition: 'background .15s, color .15s, transform .15s',
+                  transform: active ? 'translateY(-1px)' : 'none',
                 }}
               >
                 {l.label}

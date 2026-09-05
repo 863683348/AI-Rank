@@ -174,13 +174,63 @@ export default function Leaderboard({
         {board.map((l, i) => (
           <article
             key={l.id}
-            className={pulseRef.current.has(l.id) ? 'bid-pulse rounded-xl' : 'rounded-xl'}
+            className={`group ${pulseRef.current.has(l.id) ? 'bid-pulse rounded-xl' : 'rounded-xl'}`}
             style={{
               background: 'var(--surface)',
               border: '1px solid var(--border)',
               padding: '14px 18px',
+              position: 'relative',
+              overflow: 'visible',
+              transition: 'border-color .15s, box-shadow .15s',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 20px rgba(37,99,235,.15)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
             }}
           >
+            {/* 悬浮提示：最后出价时间 / 当前金额 / 已进账总额 */}
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 8px)',
+                left: 0,
+                zIndex: 30,
+                background: 'var(--surface)',
+                border: '1px solid var(--accent)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                minWidth: 200,
+                boxShadow: '0 8px 32px rgba(37,99,235,.2)',
+                opacity: 0,
+                pointerEvents: 'none',
+                transition: 'opacity .15s, transform .15s',
+                transform: 'translateY(6px)',
+              }}
+              className="group-hover:opacity-100 group-hover:pointer-events-auto group-hover:translate-y-0"
+            >
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 4, letterSpacing: '.02em' }}>
+                最后出价
+              </div>
+              <div style={{ fontSize: 13, color: 'var(--fg)', marginBottom: 8 }}>
+                {new Date(l.lastBidAt).toLocaleString('zh-CN', { hour12: false, hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' })}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.02em' }}>
+                当前金额
+              </div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--accent)', marginBottom: 8, fontVariantNumeric: 'tabular-nums' }}>
+                {formatMoney(l.bidAmount)}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.02em' }}>
+                已进账总额
+              </div>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}>
+                {formatMoney(l.lifetimeAmount)}
+              </div>
+            </div>
             <div className="flex items-center gap-4">
               <span
                 className="font-mono text-xl font-semibold"
