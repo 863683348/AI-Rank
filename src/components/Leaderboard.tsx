@@ -482,6 +482,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [payingAmount, setPayingAmount] = useState<number | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const submit = useCallback(async () => {
     setLoading(true);
@@ -496,8 +497,9 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       if (!res.ok) throw new Error(data.error ?? '创建支付失败');
 
       if (channel === 'waffo' && data.checkoutUrl) {
-        // Waffo：跳转式支付，直接跳转到收银台完成付款
-        window.location.href = data.checkoutUrl;
+        // Waffo：先弹出收银台确认卡片，点击按钮再跳转收银台
+        setCheckoutUrl(data.checkoutUrl);
+        setPayingAmount(amount);
         return;
       }
 
@@ -516,6 +518,18 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       setLoading(false);
     }
   }, [listing.id, amount, channel, onClose]);
+
+  if (checkoutUrl) {
+    return (
+      <CheckoutCard
+        amount={payingAmount ?? amount}
+        checkoutUrl={checkoutUrl}
+        onClose={onClose}
+        title="前往 Waffo 收银台支付"
+        note="点击下方按钮将在新窗口打开托管收银台完成付款"
+      />
+    );
+  }
 
   if (qrDataUrl) {
     return (
@@ -610,6 +624,7 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const submit = useCallback(async () => {
     setLoading(true);
@@ -623,9 +638,9 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建失败');
 
-      // Waffo：跳转式支付
+      // Waffo：先弹出收银台确认卡片，点击按钮再跳转收银台
       if (form.channel === 'waffo' && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+        setCheckoutUrl(data.checkoutUrl);
         return;
       }
 
@@ -649,6 +664,18 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
     color: 'var(--fg)',
     padding: '9px 12px',
   } as const;
+
+  if (checkoutUrl) {
+    return (
+      <CheckoutCard
+        amount={form.amount}
+        checkoutUrl={checkoutUrl}
+        onClose={onClose}
+        title="前往 Waffo 收银台支付"
+        note="点击下方按钮将在新窗口打开托管收银台完成付款"
+      />
+    );
+  }
 
   if (qrDataUrl) {
     return (
@@ -754,6 +781,64 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
         )}
         {loading ? '处理中…' : form.channel === 'waffo' ? '前往收银台支付' : '生成支付码'}
       </button>
+    </Overlay>
+  );
+}
+
+function CheckoutCard({
+  amount,
+  checkoutUrl,
+  onClose,
+  title,
+  note,
+}: {
+  amount: number;
+  checkoutUrl: string;
+  onClose: () => void;
+  title: string;
+  note: string;
+}) {
+  return (
+    <Overlay onClose={onClose}>
+      <h2 className="text-base font-semibold">{title}</h2>
+      <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
+        {note}
+      </p>
+
+      {/* 收款卡片：白底、居中、大号金额 */}
+      <div className="mt-4 rounded-xl p-6 text-center" style={{ background: '#fff', boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+        <div className="text-[12px] font-medium" style={{ color: '#9a9aa2' }}>
+          应付金额
+        </div>
+        <div className="mt-1 font-mono text-[32px] font-bold" style={{ color: '#14161f', letterSpacing: '-0.02em' }}>
+          ¥{amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+        </div>
+        <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium" style={{ background: '#0d6efd', color: '#fff' }}>
+          <Activity size={14} aria-hidden />
+          Waffo 安全收银台
+        </div>
+      </div>
+
+      <p className="mt-4 text-center text-[13px]" style={{ color: 'var(--muted)' }}>
+        点击下方按钮前往受限收银台完成付款，金额以收银台为准。
+      </p>
+
+      <button
+        onClick={() => {
+          window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+          onClose();
+        }}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg text-sm font-medium"
+        style={{ background: 'var(--accent)', color: 'var(--accent-on)', padding: '11px 0' }}
+      >
+        <ExternalLink size={15} aria-hidden />
+        前往收银台支付
+      </button>
+
+      <div className="mt-3 flex items-center justify-center gap-2 text-[12px]" style={{ color: 'var(--meta)' }}>
+        <Loader2 size={13} className="animate-spin" aria-hidden />
+        支付完成后自动回到榜单并立即上榜
+      </div>
     </Overlay>
   );
 }
