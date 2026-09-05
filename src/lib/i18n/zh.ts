@@ -26,6 +26,10 @@ export const zh = {
   'home.cta.submit': '提交新工具',
   'home.cta.bid': '加价',
   'home.cta.visit': '访问',
+  'home.latestBids': '最新出价',
+  'home.bidsCount': '笔',
+  'home.noBids': '还没有出价，抢先占 C 位。',
+  'home.rules': '金额即排名，花小钱上 C 位、当显眼包；每一笔公开可审计。每日 00:00（北京时间）在榜金额重置为 ¥1，条目与点击数保留。',
 
   // 状态
   'status.approved': '已上榜',

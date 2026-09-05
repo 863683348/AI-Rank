@@ -5,7 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import LangSwitcher from './LangSwitcher';
-import { t, useClientLocale } from '@/lib/i18n/dict';
+import { t } from '@/lib/i18n/dict';
+import { useClientLocale } from '@/lib/i18n/dict.client';
 
 const LINKS: { href: string; labelKey: 'nav.home' | 'nav.categories' | 'nav.rules' | 'nav.faq' | 'nav.contact' }[] = [
   { href: '/', labelKey: 'nav.home' },

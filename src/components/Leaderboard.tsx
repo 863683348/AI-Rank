@@ -21,10 +21,11 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
-import { CATEGORIES } from '@/lib/categories';
+import { CATEGORIES, categoryLabel } from '@/lib/categories';
 import { TOPIC_SLUGS } from '@/lib/topics';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
-import { useClientLocale, t } from '@/lib/i18n/dict';
+import { t } from '@/lib/i18n/dict';
+import { useClientLocale } from '@/lib/i18n/dict.client';
 import Link from 'next/link';
 
 type Listing = {
@@ -368,9 +369,9 @@ export default function Leaderboard({
               fontVariantNumeric: 'tabular-nums',
               letterSpacing: '-0.02em',
             }}
-            aria-label={`自上线以来已进账 ${formatMoney(lifetime)}`}
+            aria-label={`自上线以来已进账 ${formatMoney(lifetime, locale)}`}
           >
-            {formatMoney(lifetime)}
+            {formatMoney(lifetime, locale)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>自上线以来</div>
         </section>
@@ -387,10 +388,10 @@ export default function Leaderboard({
         >
           <span className="flex items-center gap-2 text-[14px] font-semibold" style={{ color: 'var(--fg)' }}>
             <span className="inline-block h-2 w-2 rounded-full" style={{ background: 'var(--success)' }} />
-            最新出价
+            {t('home.latestBids', locale)}
           </span>
           <span className="flex items-center gap-1 text-[13px]" style={{ color: 'var(--muted)' }}>
-            {recentBids.length} 笔
+            {recentBids.length} {t('home.bidsCount', locale)}
             <ChevronDown
               size={15}
               aria-hidden
@@ -402,7 +403,7 @@ export default function Leaderboard({
           <div className="flex flex-col gap-3 border-t px-5 py-4" style={{ borderColor: 'var(--border)' }}>
             {recentBids.length === 0 ? (
               <div className="text-[13px]" style={{ color: 'var(--muted)' }}>
-                还没有出价，抢先占 C 位。
+                {t('home.noBids', locale)}
               </div>
             ) : (
               recentBids.map((b) => (
@@ -417,7 +418,7 @@ export default function Leaderboard({
                     +¥{Number(b.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="shrink-0" style={{ color: 'var(--meta)' }}>
-                    {timeAgo(new Date(b.createdAt).toISOString())}
+                    {timeAgo(new Date(b.createdAt).toISOString(), locale)}
                   </span>
                 </div>
               ))
@@ -428,13 +429,14 @@ export default function Leaderboard({
 
       {/* 机制说明 */}
       <p className="mt-3 text-[13px]" style={{ color: 'var(--muted)' }}>
-        金额即排名，花小钱上 C 位、当显眼包；每一笔公开可审计。每日 00:00（北京时间）在榜金额重置为 ¥1，条目与点击数保留。
+        {t('home.rules', locale)}
       </p>
 
-      {/* 分类筛选 */}
+      {/* 分类筛选（scroll={false}：切分类不跳页首，留在当前滚动位置） */}
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href="/"
+          scroll={false}
           style={{
             textDecoration: 'none',
             fontSize: 12,
@@ -454,6 +456,7 @@ export default function Leaderboard({
             <Link
               key={c.slug}
               href={isTopic ? `/${c.slug}` : `/?cat=${c.slug}`}
+              scroll={false}
               style={{
                 textDecoration: 'none',
                 fontSize: 12,
@@ -464,7 +467,7 @@ export default function Leaderboard({
                 border: '1px solid var(--border)',
               }}
             >
-              {c.label}
+              {categoryLabel(c.slug, locale)}
             </Link>
           );
         })}
@@ -540,13 +543,13 @@ export default function Leaderboard({
                 当前金额
               </div>
               <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--accent)', marginBottom: 8, fontVariantNumeric: 'tabular-nums' }}>
-                {formatMoney(l.bidAmount)}
+                {formatMoney(l.bidAmount, locale)}
               </div>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 3, letterSpacing: '.02em' }}>
                 已进账总额
               </div>
               <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--fg-2)', fontVariantNumeric: 'tabular-nums' }}>
-                {formatMoney(l.lifetimeAmount)}
+                {formatMoney(l.lifetimeAmount, locale)}
               </div>
             </div>
             <div className={featured ? 'flex items-center gap-5' : 'flex items-center gap-4'}>
@@ -665,7 +668,7 @@ export default function Leaderboard({
                     style={{ color: 'var(--meta)' }}
                   >
                     <Timer size={12} aria-hidden />
-                    {timeAgo(new Date(l.lastBidAt).toISOString())}
+                    {timeAgo(new Date(l.lastBidAt).toISOString(), locale)}
                   </span>
                   {featured && (
                     <span
@@ -678,7 +681,7 @@ export default function Leaderboard({
                       title="已进账总额"
                     >
                       <Wallet size={12} aria-hidden />
-                      {formatMoney(l.lifetimeAmount)}
+                      {formatMoney(l.lifetimeAmount, locale)}
                     </span>
                   )}
                 </div>
@@ -697,7 +700,7 @@ export default function Leaderboard({
                     textShadow: '0 0 16px rgba(255,106,0,.20)',
                   }}
                 >
-                  {formatMoney(l.bidAmount)}
+                  {formatMoney(l.bidAmount, locale)}
                 </div>
                 <div className={featured ? 'flex items-center gap-3' : 'flex items-center gap-2'}>
                   <Link
@@ -766,6 +769,7 @@ export default function Leaderboard({
 }
 
 function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void }) {
+  const locale = useClientLocale();
   const [amount, setAmount] = useState(1);
   const [channel, setChannel] = useState<'yungouos' | 'waffo'>('waffo');
   const [loading, setLoading] = useState(false);
@@ -824,7 +828,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
   if (qrDataUrl) {
     return (
       <Overlay onClose={onClose}>
-        <h2 className="text-base font-semibold">微信扫码支付 {formatMoney(payingAmount ?? 0)}</h2>
+        <h2 className="text-base font-semibold">微信扫码支付 {formatMoney(payingAmount ?? 0, locale)}</h2>
         <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
           打开微信扫一扫，支付成功后将自动上榜。榜单通过 SSE 实时刷新，不用刷新页面。
         </p>
@@ -851,7 +855,7 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
     <Overlay onClose={onClose}>
       <h2 className="text-base font-semibold">给「{listing.name}」加价</h2>
       <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
-        当前 {formatMoney(listing.bidAmount)}。支付成功后立即生效，上榜金额 = 累计竞价。
+        当前 {formatMoney(listing.bidAmount, locale)}。支付成功后立即生效，上榜金额 = 累计竞价。
       </p>
       <ChannelPicker value={channel} onChange={setChannel} />
       <div className="mt-4 flex gap-2">
@@ -920,6 +924,7 @@ function NewListingDialog({
   initialAmount?: number;
   initialCategory?: string;
 }) {
+  const locale = useClientLocale();
   const [form, setForm] = useState({
     url: initialUrl,
     name: '',
@@ -1020,7 +1025,7 @@ function NewListingDialog({
   if (qrDataUrl) {
     return (
       <Overlay onClose={onClose}>
-        <h2 className="text-base font-semibold">扫码上榜 {formatMoney(form.amount)}</h2>
+        <h2 className="text-base font-semibold">扫码上榜 {formatMoney(form.amount, locale)}</h2>
         <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
           微信或支付宝扫一扫均可，支付成功后立即上榜 C 位。榜单通过 SSE 实时刷新。
         </p>
@@ -1080,7 +1085,7 @@ function NewListingDialog({
           >
             {CATEGORIES.map((c) => (
               <option key={c.slug} value={c.slug}>
-                {c.label}
+                {categoryLabel(c.slug, locale)}
               </option>
             ))}
           </select>

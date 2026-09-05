@@ -4,6 +4,7 @@ import { eq, desc, sql } from 'drizzle-orm';
 import type { Metadata } from 'next';
 import { formatMoney } from '@/lib/format';
 import { BadgeCheck, ExternalLink } from 'lucide-react';
+import { getServerLocale } from '@/lib/i18n/dict.server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ export async function generateMetadata({
   if (!row) {
     return { title: '工具未找到', description: '该 listing 不存在或已下架。', robots: { index: false } };
   }
-  const money = formatMoney(row.bidAmount);
+  const money = formatMoney(row.bidAmount, await getServerLocale());
   return {
     title: `${row.name}（在榜 ${money}）`,
     description:
@@ -48,6 +49,7 @@ export default async function ListingDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const locale = await getServerLocale();
   const [listing] = await db.select().from(listings).where(eq(listings.id, id)).limit(1);
 
   if (!listing) {
@@ -160,7 +162,7 @@ export default async function ListingDetail({
           <div>
             <div className="text-[11px]" style={{ color: 'var(--meta)' }}>当前在榜金额</div>
             <div className="font-mono text-lg font-semibold" style={{ color: 'var(--fg-2)' }}>
-              {formatMoney(listing.bidAmount)}
+              {formatMoney(listing.bidAmount, locale)}
             </div>
           </div>
           <div>
@@ -172,7 +174,7 @@ export default async function ListingDetail({
           <div>
             <div className="text-[11px]" style={{ color: 'var(--meta)' }}>累计投入</div>
             <div className="font-mono text-lg" style={{ color: 'var(--fg-2)' }}>
-              {formatMoney(listing.lifetimeAmount)}
+              {formatMoney(listing.lifetimeAmount, locale)}
             </div>
           </div>
           <div>
@@ -215,7 +217,7 @@ export default async function ListingDetail({
                       {beijingTime(new Date(b.createdAt).toISOString())}
                     </td>
                     <td className="px-3 py-2 text-right font-mono" style={{ color: 'var(--fg-2)' }}>
-                      +{formatMoney(b.amount)}
+                      +{formatMoney(b.amount, locale)}
                     </td>
                     <td className="px-3 py-2 text-right" style={{ color: 'var(--meta)' }}>
                       {new Date(b.createdAt).toISOString() === firstBidIso ? '新条目' : '加价'}

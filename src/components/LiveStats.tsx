@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Activity, MousePointerClick, TrendingUp, Trophy, Coins, RefreshCw } from 'lucide-react';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
+import { useClientLocale } from '@/lib/i18n/dict.client';
 
 type Stats = {
   listings: number;
@@ -89,6 +90,7 @@ function Kpi({
 }
 
 export default function LiveStats() {
+  const locale = useClientLocale();
   const [stats, setStats] = useState<Stats | null>(null);
   const [live, setLive] = useState(false);
   const [boardTotal, setBoardTotal] = useState<number | null>(null);
@@ -147,13 +149,13 @@ export default function LiveStats() {
         <Kpi
           icon={<Coins size={14} aria-hidden />}
           label="当前在榜总额"
-          value={boardTotal != null ? formatMoney(boardTotal) : stats ? formatMoney(stats.onBoard) : '—'}
+          value={boardTotal != null ? formatMoney(boardTotal, locale) : stats ? formatMoney(stats.onBoard, locale) : '—'}
           live
         />
         <Kpi
           icon={<TrendingUp size={14} aria-hidden />}
           label="累计投入"
-          value={stats ? formatMoney(stats.lifetime) : '—'}
+          value={stats ? formatMoney(stats.lifetime, locale) : '—'}
           sub="不受每日重置影响"
         />
         <Kpi
@@ -165,7 +167,7 @@ export default function LiveStats() {
           icon={<Activity size={14} aria-hidden />}
           label="今日出价"
           value={stats ? `${stats.todayBids} 笔` : '—'}
-          sub={stats ? `今日 ${formatMoney(stats.todayAmount)}` : undefined}
+          sub={stats ? `今日 ${formatMoney(stats.todayAmount, locale)}` : undefined}
         />
         <Kpi
           icon={<RefreshCw size={14} aria-hidden />}
@@ -225,10 +227,10 @@ export default function LiveStats() {
                   <span style={{ color: 'var(--meta)' }}>· {methodLabel(a.method)}</span>
                 </span>
                 <span className="font-mono font-semibold" style={{ color: 'var(--accent)' }}>
-                  {formatMoney(a.amount)}
+                  {formatMoney(a.amount, locale)}
                 </span>
                 <span style={{ color: 'var(--meta)', width: 64, textAlign: 'right' }}>
-                  {timeAgo(a.createdAt)}
+                  {timeAgo(a.createdAt, locale)}
                 </span>
               </li>
             ))}

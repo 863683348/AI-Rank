@@ -20,6 +20,10 @@ export const en: Partial<Record<DictKey, string>> = {
 
   'home.title': 'C-Spot Spotlight',
   'home.subtitle': 'AI Tools Bidding Board — your bid is your rank, daily 00:00 reset',
+  'home.latestBids': 'Latest bids',
+  'home.bidsCount': 'bids',
+  'home.noBids': 'No bids yet — grab the C-spot first.',
+  'home.rules': 'Your bid is your rank — spend a little to grab the spotlight. Every payment is public & auditable. At 00:00 (Beijing time) daily all ranks reset to ¥1; entries & click counts are kept.',
 
   'status.approved': 'Approved',
   'status.pending': 'Pending',

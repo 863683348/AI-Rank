@@ -13,7 +13,8 @@
  */
 
 import { Languages } from 'lucide-react';
-import { setClientLocale, useClientLocale, type Locale } from '@/lib/i18n/dict';
+import { setClientLocale, type Locale } from '@/lib/i18n/dict';
+import { useClientLocale } from '@/lib/i18n/dict.client';
 
 export default function LangSwitcher() {
   const locale = useClientLocale();
