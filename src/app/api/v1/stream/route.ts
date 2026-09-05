@@ -57,6 +57,7 @@ export async function GET(req: NextRequest) {
                 bidAmount: listings.bidAmount,
                 totalClicks: listings.totalClicks,
                 lastBidAt: listings.lastBidAt,
+                verified: listings.verified,
               })
               .from(listings)
               .where(eq(listings.status, 'approved'))

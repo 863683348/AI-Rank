@@ -16,10 +16,12 @@ import {
   Link2,
   ChevronDown,
   Eye,
+  BadgeCheck,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import { CATEGORIES } from '@/lib/categories';
+import { TOPIC_SLUGS } from '@/lib/topics';
 import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
 import Link from 'next/link';
 
@@ -33,6 +35,7 @@ type Listing = {
   lifetimeAmount: string;
   totalClicks: number;
   lastBidAt: string | Date;
+  verified?: boolean;
 };
 
 type PayChannel = 'yungouos' | 'waffo';
@@ -131,9 +134,11 @@ function Countdown() {
 export default function Leaderboard({
   initial,
   activeCategory,
+  defaultCategory,
 }: {
   initial: Listing[];
   activeCategory?: string | null;
+  defaultCategory?: string;
 }) {
   const [board, setBoard] = useState<Listing[]>(initial);
   const [live, setLive] = useState(false);
@@ -422,10 +427,11 @@ export default function Leaderboard({
         </Link>
         {CATEGORIES.map((c) => {
           const active = activeCategory === c.slug;
+          const isTopic = TOPIC_SLUGS.has(c.slug);
           return (
             <Link
               key={c.slug}
-              href={`/?cat=${c.slug}`}
+              href={isTopic ? `/${c.slug}` : `/?cat=${c.slug}`}
               style={{
                 textDecoration: 'none',
                 fontSize: 12,
@@ -572,6 +578,21 @@ export default function Leaderboard({
                   >
                     {l.name}
                   </span>
+                  {l.verified && (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                      style={{
+                        background: 'rgba(34,197,94,.12)',
+                        color: 'var(--success)',
+                        border: '1px solid rgba(34,197,94,.3)',
+                      }}
+                      title="已通过域名白名单校验"
+                      aria-label="已认证"
+                    >
+                      <BadgeCheck size={11} aria-hidden />
+                      已认证
+                    </span>
+                  )}
                   <a
                     href={`/api/v1/click/${l.id}`}
                     target="_blank"
@@ -681,6 +702,7 @@ export default function Leaderboard({
           onClose={() => setShowNew(false)}
           initialUrl={heroUrl}
           initialAmount={heroAmount}
+          initialCategory={defaultCategory}
         />
       )}
     </main>
@@ -835,17 +857,19 @@ function NewListingDialog({
   onClose,
   initialUrl = '',
   initialAmount = 1,
+  initialCategory = 'ai-tools',
 }: {
   onClose: () => void;
   initialUrl?: string;
   initialAmount?: number;
+  initialCategory?: string;
 }) {
   const [form, setForm] = useState({
     url: initialUrl,
     name: '',
     description: '',
     amount: initialAmount,
-    category: 'ai-tools',
+    category: initialCategory,
     channel: 'waffo' as PayChannel,
   });
   const [loading, setLoading] = useState(false);

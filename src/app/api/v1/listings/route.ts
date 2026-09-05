@@ -5,6 +5,7 @@ import { desc, eq } from 'drizzle-orm';
 import { createNativeOrder } from '@/lib/yungouos';
 import { createCheckoutSession } from '@/lib/waffo';
 import { validateUrl, scanSafety, decideStatus } from '@/lib/listingGuard';
+import { notifyNewPending } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,7 @@ export async function GET() {
       lifetimeAmount: listings.lifetimeAmount,
       totalClicks: listings.totalClicks,
       lastBidAt: listings.lastBidAt,
+      verified: listings.verified,
     })
     .from(listings)
     .where(eq(listings.status, 'approved'))
@@ -83,6 +85,13 @@ export async function POST(req: NextRequest) {
 
     // 待人工审核：不创建支付，提示等待审核
     if (status === 'pending') {
+      // 通知审核人（失败不影响主流程，notify 内部 try/catch）
+      void notifyNewPending({
+        listingId: listing.id,
+        name,
+        url,
+        category: body.category,
+      });
       return NextResponse.json({
         status: 'pending',
         message: '已提交，待人工审核。审核通过后即可支付上 C 位，我们会尽快处理。',

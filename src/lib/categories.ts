@@ -3,6 +3,8 @@ export type Category = { slug: string; label: string };
 /** 榜单分类（slug 与 listings.category 字段对应，default 'ai-tools'） */
 export const CATEGORIES: Category[] = [
   { slug: 'ai-tools', label: 'AI 工具' },
+  { slug: 'gpt6', label: 'GPT-6 专区' },
+  { slug: 'dsh', label: 'DSH 专区' },
   { slug: 'ai-agent', label: 'AI 智能体' },
   { slug: 'image', label: '图像生成' },
   { slug: 'video', label: '视频生成' },

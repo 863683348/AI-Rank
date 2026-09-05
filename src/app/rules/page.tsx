@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+
 const RULES = [
   {
     title: '一、金额即排名',
@@ -26,6 +28,12 @@ const RULES = [
 ];
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: '榜单规则',
+  description: 'ToolsRank 竞价榜规则：金额即排名、每日 00:00 重置、支付即可上榜、公开可审计。',
+  alternates: { canonical: '/rules' },
+};
 
 export default function RulesPage() {
   return (

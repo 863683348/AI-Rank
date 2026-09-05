@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 
 const CONTACTS = [
   {
@@ -19,6 +20,13 @@ const CONTACTS = [
 ];
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: '联系我',
+  description: 'ToolsRank 商务合作、上架咨询、退款核对的联系方式。',
+  alternates: { canonical: '/contact' },
+  robots: { index: true, follow: true },
+};
 
 export default function ContactPage() {
   return (

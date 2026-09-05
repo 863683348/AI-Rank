@@ -2,10 +2,17 @@ import { db } from '@/db';
 import { listings } from '@/db/schema';
 import { desc } from 'drizzle-orm';
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { CATEGORIES, categoryLabel } from '@/lib/categories';
 import { formatMoney } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: '分类榜单',
+  description: 'ToolsRank 按 AI 工具类型分桶的子榜单：图像、文本、代码、语音、视频。',
+  alternates: { canonical: '/categories' },
+};
 
 type Row = {
   id: string;

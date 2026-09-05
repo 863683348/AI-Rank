@@ -2,7 +2,7 @@ import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { formatMoney } from '@/lib/format';
-import { ExternalLink } from 'lucide-react';
+import { BadgeCheck, ExternalLink } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,9 +91,26 @@ export default async function ListingDetail({
             />
           )}
           <div className="min-w-0">
-            <h1 className="text-xl font-semibold" style={{ letterSpacing: '-0.01em' }}>
-              {listing.name}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold" style={{ letterSpacing: '-0.01em' }}>
+                {listing.name}
+              </h1>
+              {listing.verified && (
+                <span
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                  style={{
+                    background: 'rgba(34,197,94,.12)',
+                    color: 'var(--success)',
+                    border: '1px solid rgba(34,197,94,.3)',
+                  }}
+                  title="已通过域名白名单校验"
+                  aria-label="已认证"
+                >
+                  <BadgeCheck size={12} aria-hidden />
+                  已认证
+                </span>
+              )}
+            </div>
             {listing.description && (
               <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
                 {listing.description}

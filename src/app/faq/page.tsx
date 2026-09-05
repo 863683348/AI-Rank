@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+
 const FAQ = [
   {
     q: '这个榜单是干嘛的？',
@@ -30,6 +32,12 @@ const FAQ = [
 ];
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: '常见问题',
+  description: '关于 ToolsRank 竞价榜、重置机制、支付与审计的常见问题。',
+  alternates: { canonical: '/faq' },
+};
 
 export default function FaqPage() {
   return (
