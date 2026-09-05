@@ -2,17 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { createCheckout } from '@/lib/stripe';
+import { createNativeOrder } from '@/lib/yungouos';
 
 export const dynamic = 'force-dynamic';
 
-/** POST /api/v1/listings/[id]/bid — 已上榜工具加价 */
+/** POST /api/v1/listings/[id]/bid — 已上榜工具加价（创建待支付 bid → 微信扫码） */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let body: { amount?: number };
+  let body: { amount?: number; channel?: string };
   try {
     body = await req.json();
   } catch {
@@ -29,11 +29,20 @@ export async function POST(
 
   const [bid] = await db
     .insert(bids)
-    .values({ listingId: id, amount: amount.toFixed(2), paymentMethod: 'stripe' })
+    .values({ listingId: id, amount: amount.toFixed(2), paymentMethod: 'yungouos' })
     .returning();
 
-  const origin = req.headers.get('origin') ?? new URL(req.url).origin;
-  const checkout = await createCheckout({ bidId: bid.id, amount, name: listing.name, origin });
+  const order = await createNativeOrder({
+    outTradeNo: bid.id,
+    amount,
+    body: `${listing.name} 加价 ¥${amount}`,
+    attach: JSON.stringify({ listingId: id, bidId: bid.id }),
+    channel: (body.channel as 'merge' | 'wechat' | 'alipay') ?? 'merge',
+  });
 
-  return NextResponse.json({ checkoutUrl: checkout.url, bidId: bid.id });
+  return NextResponse.json({
+    codeUrl: order.codeUrl,
+    qrCodeImgUrl: order.qrCodeImgUrl,
+    bidId: bid.id,
+  });
 }

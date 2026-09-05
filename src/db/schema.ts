@@ -32,7 +32,7 @@ export const bids = pgTable('bids', {
   id: uuid('id').primaryKey().defaultRandom(),
   listingId: uuid('listing_id').notNull().references(() => listings.id, { onDelete: 'cascade' }),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: text('payment_method').notNull(), // wechat | stripe
+  paymentMethod: text('payment_method').notNull(), // yungouos（微信/支付宝 一码付）
   status: text('status').notNull().default('pending'), // pending | confirmed | refunded
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
@@ -47,7 +47,7 @@ export const payments = pgTable('payments', {
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   currency: text('currency').notNull(), // CNY | USD
   paymentMethod: text('payment_method').notNull(),
-  externalId: text('external_id'), // Stripe payment_intent / 微信 transaction_id
+  externalId: text('external_id'), // YunGouOS transaction_id（幂等键）
   status: text('status').notNull().default('pending'),
   confirmedAt: timestamp('confirmed_at', { withTimezone: true }),
 }, (t) => [

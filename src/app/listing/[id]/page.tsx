@@ -102,7 +102,7 @@ export default async function ListingDetail({
                 +{formatMoney(b.amount)}
               </span>
               <span style={{ color: 'var(--meta)' }}>
-                {b.method === 'stripe' ? 'Stripe' : 'WeChat'} · {timeAgo(new Date(b.createdAt).toISOString())}
+                {b.method === 'yungouos' ? '微信/支付宝' : b.method} · {timeAgo(new Date(b.createdAt).toISOString())}
               </span>
             </li>
           ))}

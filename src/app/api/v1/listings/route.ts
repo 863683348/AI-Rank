@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
 import { desc } from 'drizzle-orm';
-import { createCheckout } from '@/lib/stripe';
+import { createNativeOrder } from '@/lib/yungouos';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,9 +27,9 @@ export async function GET() {
   return NextResponse.json({ listings: rows });
 }
 
-/** POST /api/v1/listings — 新工具上架（创建 listing + 待支付 bid → Stripe Checkout） */
+/** POST /api/v1/listings — 新工具上架（创建 listing + 待支付 bid → 微信扫码） */
 export async function POST(req: NextRequest) {
-  let body: { url?: string; name?: string; description?: string; iconUrl?: string; amount?: number };
+  let body: { url?: string; name?: string; description?: string; iconUrl?: string; amount?: number; channel?: string };
   try {
     body = await req.json();
   } catch {
@@ -66,18 +66,24 @@ export async function POST(req: NextRequest) {
 
     const [bid] = await db
       .insert(bids)
-      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: 'stripe' })
+      .values({ listingId: listing.id, amount: amount.toFixed(2), paymentMethod: 'yungouos' })
       .returning();
 
-    const origin = req.headers.get('origin') ?? new URL(req.url).origin;
-    const checkout = await createCheckout({
-      bidId: bid.id,
+    // out_trade_no 用 bid.id（UUID，全局唯一）
+    const order = await createNativeOrder({
+      outTradeNo: bid.id,
       amount,
-      name,
-      origin,
+      body: `${name} 上榜 ¥${amount}`,
+      attach: JSON.stringify({ listingId: listing.id, bidId: bid.id }),
+      channel: (body.channel as 'merge' | 'wechat' | 'alipay') ?? 'merge',
     });
 
-    return NextResponse.json({ checkoutUrl: checkout.url, listingId: listing.id, bidId: bid.id });
+    return NextResponse.json({
+      codeUrl: order.codeUrl,
+      qrCodeImgUrl: order.qrCodeImgUrl,
+      listingId: listing.id,
+      bidId: bid.id,
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     if (msg.includes('uniq_listings_url')) {

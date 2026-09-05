@@ -11,7 +11,10 @@ import {
   Plus,
   X,
   Loader2,
+  QrCode,
+  Smartphone,
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -218,6 +221,8 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
   const [amount, setAmount] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [payingAmount, setPayingAmount] = useState<number | null>(null);
 
   const submit = useCallback(async () => {
     setLoading(true);
@@ -230,12 +235,46 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建支付失败');
-      window.location.href = data.checkoutUrl;
+      // 把支付链接渲染为二维码（微信/支付宝均可扫）；不在网页内跳转
+      const dataUrl = await QRCode.toDataURL(data.codeUrl, {
+        margin: 1,
+        width: 220,
+        color: { dark: '#000000', light: '#FFFFFF' },
+      });
+      setQrDataUrl(dataUrl);
+      setPayingAmount(amount);
     } catch (e) {
       setError(e instanceof Error ? e.message : '创建支付失败');
+    } finally {
       setLoading(false);
     }
   }, [listing.id, amount]);
+
+  if (qrDataUrl) {
+    return (
+      <Overlay onClose={onClose}>
+        <h2 className="text-base font-semibold">微信扫码支付 {formatMoney(payingAmount ?? 0)}</h2>
+        <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
+          打开微信扫一扫，支付成功后将自动上榜。榜单通过 SSE 实时刷新，不用刷新页面。
+        </p>
+        <div className="mt-4 flex justify-center rounded-xl p-4" style={{ background: '#fff' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrDataUrl} alt="微信支付二维码" width={220} height={220} />
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-2 text-[13px]" style={{ color: 'var(--muted)' }}>
+          <Smartphone size={14} aria-hidden />
+          扫码后回到此页面即可，无需停留
+        </div>
+        <button
+          onClick={onClose}
+          className="mt-4 w-full rounded-lg text-sm font-medium"
+          style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
+        >
+          我已支付 / 关闭
+        </button>
+      </Overlay>
+    );
+  }
 
   return (
     <Overlay onClose={onClose}>
@@ -285,8 +324,12 @@ function BidDialog({ listing, onClose }: { listing: Listing; onClose: () => void
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg text-sm font-medium disabled:opacity-50"
         style={{ background: 'var(--accent)', color: 'var(--accent-on)', padding: '11px 0' }}
       >
-        {loading && <Loader2 size={15} className="animate-spin" aria-hidden />}
-        支付 {formatMoney(amount || 0)}（Stripe）
+        {loading ? (
+          <Loader2 size={15} className="animate-spin" aria-hidden />
+        ) : (
+          <QrCode size={15} aria-hidden />
+        )}
+        生成微信支付码
       </button>
     </Overlay>
   );
@@ -296,6 +339,7 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
   const [form, setForm] = useState({ url: '', name: '', description: '', amount: 1 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const submit = useCallback(async () => {
     setLoading(true);
@@ -308,9 +352,15 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? '创建失败');
-      window.location.href = data.checkoutUrl;
+      const dataUrl = await QRCode.toDataURL(data.codeUrl, {
+        margin: 1,
+        width: 220,
+        color: { dark: '#000000', light: '#FFFFFF' },
+      });
+      setQrDataUrl(dataUrl);
     } catch (e) {
       setError(e instanceof Error ? e.message : '创建失败');
+    } finally {
       setLoading(false);
     }
   }, [form]);
@@ -321,6 +371,28 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
     color: 'var(--fg)',
     padding: '9px 12px',
   } as const;
+
+  if (qrDataUrl) {
+    return (
+      <Overlay onClose={onClose}>
+        <h2 className="text-base font-semibold">扫码上榜 {formatMoney(form.amount)}</h2>
+        <p className="mt-1 text-[13px]" style={{ color: 'var(--muted)' }}>
+          微信或支付宝扫一扫均可，支付成功后立即上榜 C 位。榜单通过 SSE 实时刷新。
+        </p>
+        <div className="mt-4 flex justify-center rounded-xl p-4" style={{ background: '#fff' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qrDataUrl} alt="支付二维码（微信/支付宝）" width={220} height={220} />
+        </div>
+        <button
+          onClick={onClose}
+          className="mt-4 w-full rounded-lg text-sm font-medium"
+          style={{ background: 'var(--surface-warm)', color: 'var(--fg-2)', border: '1px solid var(--border)', padding: '11px 0' }}
+        >
+          我已支付 / 关闭
+        </button>
+      </Overlay>
+    );
+  }
 
   return (
     <Overlay onClose={onClose}>
@@ -376,8 +448,12 @@ function NewListingDialog({ onClose }: { onClose: () => void }) {
         className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg text-sm font-medium disabled:opacity-50"
         style={{ background: 'var(--accent)', color: 'var(--accent-on)', padding: '11px 0' }}
       >
-        {loading && <Loader2 size={15} className="animate-spin" aria-hidden />}
-        去支付上榜（Stripe）
+        {loading ? (
+          <Loader2 size={15} className="animate-spin" aria-hidden />
+        ) : (
+          <QrCode size={15} aria-hidden />
+        )}
+        生成支付码
       </button>
     </Overlay>
   );
@@ -387,7 +463,7 @@ function Overlay({ children, onClose }: { children: React.ReactNode; onClose: ()
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
+      style={{ background: 'var(--overlay-backdrop)' }}
       onClick={onClose}
       role="dialog"
       aria-modal="true"
