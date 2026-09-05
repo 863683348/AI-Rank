@@ -17,7 +17,7 @@ export const RULES: Record<Locale, RuleItem[]> = {
     },
     {
       title: '二、每日重置机制',
-      body: '北京时间每日 00:00，所有工具的「在榜金额」重置为 ¥1，名次归零重新竞价。工具条目本身、累计投入（lifetime）、点击数永久保留，不随重置消失。',
+      body: '北京时间每日 00:00，所有工具的「在榜金额」重置为 $1，名次归零重新竞价。工具条目本身、累计投入（lifetime）、点击数永久保留，不随重置消失。',
     },
     {
       title: '三、支付与上榜',
@@ -43,7 +43,7 @@ export const RULES: Record<Locale, RuleItem[]> = {
     },
     {
       title: '2. Daily reset',
-      body: 'At 00:00 Beijing time every day, every tool\'s on-board amount resets to ¥1 and ranks start over from zero. The tool entry itself, its lifetime spend, and click count are kept forever — only the rank resets.',
+      body: 'At 00:00 Beijing time every day, every tool\'s on-board amount resets to $1 and ranks start over from zero. The tool entry itself, its lifetime spend, and click count are kept forever — only the rank resets.',
     },
     {
       title: '3. Payment and listing',

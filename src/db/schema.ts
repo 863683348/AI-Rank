@@ -51,7 +51,7 @@ export const payments = pgTable('payments', {
   bidId: uuid('bid_id').references(() => bids.id, { onDelete: 'set null' }),
   listingId: uuid('listing_id').references(() => listings.id, { onDelete: 'set null' }),
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
-  currency: text('currency').notNull(), // CNY | USD
+  currency: text('currency').notNull(), // USD
   paymentMethod: text('payment_method').notNull(),
   externalId: text('external_id'), // YunGouOS transaction_id（幂等键）
   status: text('status').notNull().default('pending'),

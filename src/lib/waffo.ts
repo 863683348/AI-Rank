@@ -1,4 +1,4 @@
-import { WaffoPancake, WebhookEventType } from '@waffo/pancake-ts';
+import { WaffoPancake, TaxCategory, WebhookEventType } from '@waffo/pancake-ts';
 
 /**
  * Waffo Pancake SDK 封装
@@ -7,6 +7,11 @@ import { WaffoPancake, WebhookEventType } from '@waffo/pancake-ts';
  *   WAFFO_MERCHANT_ID  - 商户 ID (MER_ 开头)
  *   WAFFO_PRIVATE_KEY  - RSA 私钥 (PEM 格式)
  *   WAFFO_BASE_URL     - 可选，默认 https://api.waffo.ai
+ *
+ * V1.2 起主推自定义金额（B 方案）：
+ *   - WAFFO_PRODUCT_ID 仅用于「锁定产品版本 + 税务分类」
+ *   - 实际收款金额由 priceSnapshot 覆盖（API Key 模式专属能力）
+ *   - 调用方必须传 amount（USD），否则按 productId 后台配置价
  */
 
 let _client: WaffoPancake | null = null;
@@ -30,7 +35,13 @@ export function getClient(): WaffoPancake {
 /**
  * 创建 Checkout Session
  *
- * V1.2 起：默认按美元（USD）结算，zh 显示按汇率换算成 ¥。
+ * V1.2 起：默认按美元（USD）结算，全局以 $ 展示。
+ *
+ * 自定义金额（B 方案）：传入 `amount` 时，调用 Waffo `priceSnapshot` 覆盖后台产品价。
+ * - 仅 API Key 认证（merchantId + RSA）支持 priceSnapshot
+ * - taxCategory 必填；AI 工具/SaaS 默认 `TaxCategory.SaaS`
+ * - 不传 amount → 退回 productId 后台价（兼容旧调用）
+ *
  * @returns { checkoutUrl }
  */
 export async function createCheckoutSession(params: {
@@ -38,16 +49,35 @@ export async function createCheckoutSession(params: {
   buyerIdentity: string; // 用户唯一 ID
   buyerEmail?: string;
   currency?: string;
+  /**
+   * 自定义金额（USD）。
+   * - 字符串格式 "9.99"，小数点 2 位
+   * - 不传 → 用 productId 后台价
+   */
+  amount?: string;
+  /** 税务分类；自定义金额时必填。默认 SaaS（AI 工具/数字商品）。 */
+  taxCategory?: TaxCategory;
   metadata?: Record<string, string>;
 }): Promise<{ checkoutUrl: string }> {
   const client = getClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://toolsrank.ai';
+
+  // 构造 priceSnapshot：只在 amount 存在时启用自定义金额
+  const priceSnapshot =
+    params.amount && params.amount !== ''
+      ? {
+          amount: params.amount,
+          taxCategory: params.taxCategory ?? TaxCategory.SaaS,
+        }
+      : undefined;
+
   const result = await client.checkout.authenticated.create({
     productId: params.productId,
     currency: params.currency ?? 'USD',
     buyerIdentity: params.buyerIdentity,
     buyerEmail: params.buyerEmail,
     metadata: params.metadata,
+    ...(priceSnapshot ? { priceSnapshot } : {}),
     // 支付成功后的跳转地址
     successUrl: `${appUrl}/success`,
   });

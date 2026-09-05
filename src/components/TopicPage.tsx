@@ -7,7 +7,7 @@ import { getTopic } from '@/lib/topics';
 
 export const dynamic = 'force-dynamic';
 
-/** 专题落地页：SEO hero + 专题竞价榜（金额即排名，编辑收录条目象征性 ¥2） */
+/** 专题落地页：SEO hero + 专题竞价榜（金额即排名，编辑收录条目象征性 $2） */
 export default async function TopicPage({ slug }: { slug: string }) {
   const topic = getTopic(slug);
   if (!topic) return null;

@@ -359,7 +359,7 @@ export default function AdminPage() {
                         )}
                       </div>
                       <div className="mt-1 truncate text-[12px]" style={{ color: 'var(--meta)' }}>
-                        {domain} · {it.category} · ¥{it.bidAmount.toFixed(2)}
+                        {domain} · {it.category} · ${it.bidAmount.toFixed(2)}
                       </div>
                       {it.description && (
                         <div className="mt-1 truncate text-[13px]" style={{ color: 'var(--muted)' }}>

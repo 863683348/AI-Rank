@@ -22,7 +22,7 @@ export default async function PaySuccess({
         <CheckCircle2 size={40} style={{ color: 'var(--success)', margin: '0 auto' }} aria-hidden />
         <h1 className="mt-4 text-lg font-semibold">支付成功，竞价已生效</h1>
         <p className="mt-2 text-[13px]" style={{ color: 'var(--muted)' }}>
-          榜单已实时更新你的排名。每日 00:00（北京时间）在榜金额重置为 ¥1。
+          榜单已实时更新你的排名。每日 00:00（北京时间）在榜金额重置为 $1。
         </p>
         <Link
           href="/"

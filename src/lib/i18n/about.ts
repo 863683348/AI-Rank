@@ -51,7 +51,7 @@ export const ABOUT: Record<
     howTitle: '榜单如何运作',
     howItems: [
       '出价即排名：某工具当前累计竞价金额最高，它就排第一。',
-      '每日重置：北京时间 00:00，在榜金额清零回 ¥1、名次归零，条目与累计投入保留。',
+      '每日重置：北京时间 00:00，在榜金额清零回 $1、名次归零，条目与累计投入保留。',
       '全公开账本：每个工具详情页展示全部出价记录，含金额、支付方式、时间。',
       '支付即生效：微信 / 支付宝扫码，支付成功自动确认上榜，榜单通过 SSE 实时刷新。',
     ],
@@ -90,7 +90,7 @@ export const ABOUT: Record<
     howTitle: 'How the board works',
     howItems: [
       'Bid = rank: the tool with the highest current total bid holds position #1.',
-      'Daily reset: at 00:00 Beijing time, on-board amounts drop to ¥1 and ranks reset; entries and lifetime spend are kept.',
+      'Daily reset: at 00:00 Beijing time, on-board amounts drop to $1 and ranks reset; entries and lifetime spend are kept.',
       'Open ledger: every tool detail page shows all bids with amount, payment method, and time.',
       'Instant effect: WeChat / Alipay QR payment auto-confirms; the board refreshes in real time via SSE.',
     ],

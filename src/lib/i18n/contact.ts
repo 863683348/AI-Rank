@@ -74,8 +74,8 @@ export const CONTACT_CTA_TITLE: Record<Locale, string> = {
 
 // 给前端拼接：{CTALink} 是占位，会被替换为 <Link> 节点
 export const CONTACT_CTA_BODY: Record<Locale, string> = {
-  zh: '直接去 {link} 点「提交新工具」，¥1 起竞价，支付完立即生效。',
-  en: 'Head to the {link}, click "Submit a tool", bid from ¥1, and you\'re live the moment payment clears.',
+  zh: '直接去 {link} 点「提交新工具」，$1 起竞价，支付完立即生效。',
+  en: 'Head to the {link}, click "Submit a tool", bid from $1, and you\'re live the moment payment clears.',
 };
 
 export const CONTACT_CTA_LINK: Record<Locale, string> = {

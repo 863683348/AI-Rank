@@ -263,13 +263,13 @@ export default function Leaderboard({
           {locale === 'zh' ? (
             <>花小钱，让工具上 <span style={{ color: 'var(--accent)' }}>C 位</span></>
           ) : (
-            <>Bid ¥1+, get your tool on the <span style={{ color: 'var(--accent)' }}>C-spot</span></>
+            <>Bid $1+, get your tool on the <span style={{ color: 'var(--accent)' }}>C-spot</span></>
           )}
         </h1>
         <p className="mt-4 max-w-[560px] text-[15px] leading-relaxed" style={{ color: 'var(--muted)' }}>
           {locale === 'zh'
-            ? '出价 ¥1 起。低于 C 位的价格也会上榜——排在你的金额能买到的位置。'
-            : 'Start at ¥1. Lower bids still make the board—you rank where your bid can afford.'}
+            ? '出价 $1 起。低于 C 位的价格也会上榜——排在你的金额能买到的位置。'
+            : 'Start at $1. Lower bids still make the board—you rank where your bid can afford.'}
         </p>
 
         {/* 大提交区域 */}
@@ -315,7 +315,7 @@ export default function Leaderboard({
               className="min-w-[90px] font-mono text-[40px] font-bold"
               style={{ color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}
             >
-              ¥{heroAmount}
+              ${heroAmount}
             </span>
             <button
               onClick={() => setHeroAmount((m) => m + 1)}
@@ -328,7 +328,7 @@ export default function Leaderboard({
           </div>
 
           <div className="mt-3 text-center text-[12px]" style={{ color: 'var(--muted)' }}>
-            {locale === 'zh' ? '¥1 起。每日 0 点（中国时区）全员重置为 ¥1，不撤榜，重新抢座位。距重置' : 'Start at ¥1. Daily 00:00 (China tz) everyone resets to ¥1 — the board stays, seats are re-fought. Reset in'}{' '}
+            {locale === 'zh' ? '$1 起。每日 0 点（中国时区）全员重置为 $1，不撤榜，重新抢座位。距重置' : 'Start at $1. Daily 00:00 (China tz) everyone resets to $1 — the board stays, seats are re-fought. Reset in'}{' '}
             <Countdown />
           </div>
 
@@ -424,7 +424,7 @@ export default function Leaderboard({
                     className="shrink-0 font-mono font-semibold"
                     style={{ color: 'var(--accent)', marginRight: 12 }}
                   >
-                    +¥{Number(b.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                    +${Number(b.amount).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                   </span>
                   <span className="shrink-0" style={{ color: 'var(--meta)' }}>
                     {timeAgo(new Date(b.createdAt).toISOString(), locale)}
@@ -489,7 +489,7 @@ export default function Leaderboard({
             className="rounded-xl p-10 text-center text-sm"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--muted)' }}
           >
-            {locale === 'zh' ? '榜单还是空的。提交你的 AI 工具，¥1 起竞价，立刻占据 C 位。' : 'The board is empty. Submit your AI tool, bid from ¥1, and grab the C-spot in seconds.'}
+            {locale === 'zh' ? '榜单还是空的。提交你的 AI 工具，$1 起竞价，立刻占据 C 位。' : 'The board is empty. Submit your AI tool, bid from $1, and grab the C-spot in seconds.'}
           </div>
         )}
         {board.map((l, i) => {
@@ -761,7 +761,7 @@ export default function Leaderboard({
         }}
       >
         <Plus size={18} aria-hidden />
-        {locale === 'zh' ? '提交你的工具，上 C 位当显眼包（¥1 起）' : 'Submit your tool & grab the C-spot spotlight (from ¥1)'}
+        {locale === 'zh' ? '提交你的工具，上 C 位当显眼包（$1 起）' : 'Submit your tool & grab the C-spot spotlight (from $1)'}
       </button>
 
       {bidTarget && <BidDialog listing={bidTarget} onClose={() => setBidTarget(null)} />}
@@ -1169,7 +1169,7 @@ function CheckoutCard({
           {locale === 'zh' ? '应付金额' : 'Amount due'}
         </div>
         <div className="mt-1 font-mono text-[32px] font-bold" style={{ color: '#14161f', letterSpacing: '-0.02em' }}>
-          ¥{amount.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { minimumFractionDigits: 2 })}
+          ${amount.toLocaleString(locale === 'zh' ? 'zh-CN' : 'en-US', { minimumFractionDigits: 2 })}
         </div>
         <div className="mt-3 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[13px] font-medium" style={{ background: '#0d6efd', color: '#fff' }}>
           <Activity size={14} aria-hidden />

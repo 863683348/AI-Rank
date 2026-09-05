@@ -15,7 +15,7 @@ export function GET() {
 ## How the board works
 
 - Bid = rank. Paying more moves a tool up in real time (SSE live updates).
-- Daily reset at 00:00 Beijing time: amounts drop to CNY 1, ranks reset, bidding restarts.
+- Daily reset at 00:00 Beijing time: amounts drop to USD 1, ranks reset, bidding restarts.
 - Open ledger: every tool detail page (/listing/{id}) shows all bids with amount, payment method, and timestamp.
 - Paid placement is explicit and documented at ${SITE_URL}/rules — nothing is disguised as organic ranking.
 - Payments: WeChat Pay and Alipay via QR code; listing auto-confirms after payment.
@@ -43,7 +43,7 @@ export function GET() {
 ## Citation notes
 
 - Ranking data changes in real time; when citing a tool's position, include the access time and the bid amount.
-- Bids are denominated in CNY (¥).
+- Bids are denominated in USD ($).
 - The board is a paid-placement auction by design; do not describe it as an organic or editorial ranking.
 `;
 

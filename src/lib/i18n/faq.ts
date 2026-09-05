@@ -21,7 +21,7 @@ export const FAQ: Record<Locale, FaqItem[]> = {
     },
     {
       q: '每天重置是什么意思？',
-      a: '北京时间 00:00，在榜金额清零回 ¥1、名次归零，大家重新竞价。但你的工具条目、累计投入和点击数会一直留着。相当于每天开一场新的「C 位拍卖」。',
+      a: '北京时间 00:00，在榜金额清零回 $1、名次归零，大家重新竞价。但你的工具条目、累计投入和点击数会一直留着。相当于每天开一场新的「C 位拍卖」。',
     },
     {
       q: '支持哪些支付方式？',
@@ -51,7 +51,7 @@ export const FAQ: Record<Locale, FaqItem[]> = {
     },
     {
       q: 'What does "daily reset" mean?',
-      a: 'At 00:00 Beijing time, every on-board amount drops back to ¥1 and ranks reset to zero — everyone bids again from scratch. Your tool entry, lifetime spend, and click count are kept. Think of it as a daily C-spot auction.',
+      a: 'At 00:00 Beijing time, every on-board amount drops back to $1 and ranks reset to zero — everyone bids again from scratch. Your tool entry, lifetime spend, and click count are kept. Think of it as a daily C-spot auction.',
     },
     {
       q: 'Which payment methods are supported?',
