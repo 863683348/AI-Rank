@@ -1,47 +1,45 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
-
-const CONTACTS = [
-  {
-    label: '商务 / 合作邮箱',
-    value: '863683348@qq.com',
-    href: 'mailto:863683348@qq.com',
-  },
-  {
-    label: '微信公众号',
-    value: '大飞象的智能体2025',
-    href: null,
-  },
-  {
-    label: '知识星球',
-    value: '大飞象AI陪你成长',
-    href: null,
-  },
-];
+import {
+  CONTACTS,
+  CONTACT_META,
+  CONTACT_CTA_TITLE,
+  CONTACT_CTA_BODY,
+  CONTACT_CTA_LINK,
+} from '@/lib/i18n/contact';
+import { getServerLocale } from '@/lib/i18n/dict.server';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = {
-  title: '联系我',
-  description: 'ToolsRank 商务合作、上架咨询、退款核对的联系方式。',
-  alternates: { canonical: '/contact' },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getServerLocale();
+  const m = CONTACT_META[locale];
+  return {
+    title: m.title,
+    description: m.description,
+    alternates: { canonical: '/contact' },
+    robots: { index: true, follow: true },
+  };
+}
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const locale = await getServerLocale();
+  const list = CONTACTS[locale];
+  const meta = CONTACT_META[locale];
+
   return (
     <main style={{ maxWidth: '820px', margin: '0 auto', padding: '24px 16px' }}>
       <header style={{ marginBottom: '20px' }}>
         <h1 className="text-xl font-semibold" style={{ letterSpacing: '-0.01em' }}>
-          联系我
+          {meta.title}
         </h1>
         <p className="mt-2 text-[13px]" style={{ color: 'var(--muted)' }}>
-          合作、上架咨询、退款核对，都可以通过下面任一方式找到我。
+          {meta.subtitle}
         </p>
       </header>
 
       <section style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {CONTACTS.map((c) => (
+        {list.map((c) => (
           <div
             key={c.label}
             style={{
@@ -74,14 +72,11 @@ export default function ContactPage() {
                   borderRadius: 8,
                 }}
               >
-                发邮件
+                {c.ctaLabel}
               </Link>
             ) : (
-              <span
-                className="text-[12px]"
-                style={{ color: 'var(--meta)' }}
-              >
-                站内搜索关注
+              <span className="text-[12px]" style={{ color: 'var(--meta)' }}>
+                {c.ctaLabel}
               </span>
             )}
           </div>
@@ -98,11 +93,20 @@ export default function ContactPage() {
         }}
       >
         <p className="text-[13px]" style={{ color: 'var(--fg-2)' }}>
-          想让自己的 AI 工具上 C 位？直接去{' '}
-          <Link href="/" style={{ color: 'var(--accent)' }}>
-            榜单首页
-          </Link>{' '}
-          点「提交新工具」，¥1 起竞价，支付完立即生效。
+          <strong style={{ color: 'var(--fg)' }}>{CONTACT_CTA_TITLE[locale]}</strong>{' '}
+          {(() => {
+            const before = CONTACT_CTA_BODY[locale].split('{link}')[0];
+            const after = CONTACT_CTA_BODY[locale].split('{link}')[1];
+            return (
+              <>
+                {before}
+                <Link href="/" style={{ color: 'var(--accent)' }}>
+                  {CONTACT_CTA_LINK[locale]}
+                </Link>
+                {after}
+              </>
+            );
+          })()}
         </p>
       </div>
     </main>

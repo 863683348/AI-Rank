@@ -35,8 +35,10 @@ EXCLUDE_FILES = {".env"}
 COMMIT_MESSAGE = (
     "chore: deploy via Git Data API (WorkBuddy 沙箱网络受限，"
     "绕过 git-receive-pack 路径拦截)\n\n"
-    "包含 5 commit: Waffo 跳转支付 / 关一码付 / 已进账横幅+金银铜徽章+大号金额 / "
-    "收银台确认卡片 / 补 @waffo/pancake-ts 依赖"
+    "积压 7 commit: SSE单例+倒计时胶囊 / 首页大Hero+最新出价+按钮改名 / "
+    "上架审核(URL校验/域名白名单/邮件通知/Admin搜索筛选批量) / "
+    "topic pages /gpt6 /dsh + sitemap robots / "
+    "listing 详情 SEO metadata / 移动端流式字号"
 )
 
 

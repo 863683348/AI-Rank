@@ -53,10 +53,13 @@ export async function GET(req: NextRequest) {
                 id: listings.id,
                 name: listings.name,
                 url: listings.url,
+                description: listings.description,
                 iconUrl: listings.iconUrl,
                 bidAmount: listings.bidAmount,
+                lifetimeAmount: listings.lifetimeAmount,
                 totalClicks: listings.totalClicks,
                 lastBidAt: listings.lastBidAt,
+                category: listings.category,
                 verified: listings.verified,
               })
               .from(listings)

@@ -84,10 +84,11 @@ html.theme-ready * {
   0% { background: rgba(37, 99, 235, 0.25); }
   100% { background: transparent; }
 }
-html[data-theme="light"] @keyframes bid-pulse {
+@keyframes bid-pulse-light {
   0% { background: rgba(29, 78, 216, 0.18); }
   100% { background: transparent; }
 }
+html[data-theme="light"] .bid-pulse { animation-name: bid-pulse-light; }
 .bid-pulse {
   animation: bid-pulse var(--motion-base) var(--ease-standard);
 }
