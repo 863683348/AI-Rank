@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Design Tokens（Design-AI-Rank.md A1-identity + A2） */
+:root {
+  --bg: #08090a;
+  --surface: #0f1011;
+  --fg: #f7f8f8;
+  --muted: #8a8f98;
+  --fg-2: #d0d6e0;
+  --meta: #62666d;
+  --surface-warm: #161718;
+  --accent: #2563eb;
+  --accent-on: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.05);
+  --success: #16a34a;
+  --warn: #d97706;
+  --danger: #dc2626;
+  --accent-hover: color-mix(in srgb, var(--accent) 92%, black);
+  --focus-ring: 0 0 0 3px rgba(37, 99, 235, 0.4);
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --font-body: "Inter", "Noto Sans SC", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+html {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 竞价行：金额变化脉冲 */
+@keyframes bid-pulse {
+  0% { background: rgba(37, 99, 235, 0.25); }
+  100% { background: transparent; }
+}
+.bid-pulse {
+  animation: bid-pulse var(--motion-base) var(--ease-standard);
+}
+
+/* 实时在线点 */
+@keyframes live-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.live-dot {
+  animation: live-dot 2s var(--ease-standard) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bid-pulse, .live-dot { animation: none; }
+}
