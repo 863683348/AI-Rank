@@ -52,12 +52,6 @@ export default async function Footer() {
           <Link href="/contact" style={{ color: 'var(--fg-2)', fontSize: 13, textDecoration: 'none' }}>
             {zh ? '联系我' : 'Contact'}
           </Link>
-          <a
-            href="/llms.txt"
-            style={{ color: 'var(--meta)', fontSize: 13, textDecoration: 'none' }}
-          >
-            llms.txt
-          </a>
         </div>
 
         <p className="text-[12px]" style={{ color: 'var(--meta)', margin: 0 }}>
