@@ -73,6 +73,16 @@ function ChannelPicker({
   );
 }
 
+function iconSrcFor(l: Listing): string {
+  if (l.iconUrl) return l.iconUrl;
+  try {
+    const domain = new URL(l.url).hostname;
+    return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
+  } catch {
+    return '';
+  }
+}
+
 function Countdown() {
   const [ms, setMs] = useState<number | null>(null);
   useEffect(() => {
@@ -103,6 +113,7 @@ export default function Leaderboard({
   const [live, setLive] = useState(false);
   const [bidTarget, setBidTarget] = useState<Listing | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [lifetime, setLifetime] = useState<number | null>(null);
   const pulseRef = useRef<Set<string>>(new Set());
 
   // SSE 实时榜单
@@ -120,6 +131,16 @@ export default function Leaderboard({
     es.addEventListener('error', () => setLive(false));
     return () => es.close();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 自上线以来累计进账
+  useEffect(() => {
+    fetch('/api/v1/stats')
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d.lifetime === 'number') setLifetime(d.lifetime);
+      })
+      .catch(() => {});
   }, []);
 
   return (
@@ -159,6 +180,39 @@ export default function Leaderboard({
           </span>
         </div>
       </header>
+
+      {/* 已进账横幅（自上线以来） */}
+      {lifetime !== null && (
+        <section
+          className="flex flex-col items-center rounded-xl"
+          style={{
+            background: 'var(--surface-warm)',
+            border: '1px solid var(--border)',
+            marginTop: 14,
+            padding: '18px 20px',
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: 12, color: 'var(--muted)', letterSpacing: '.02em' }}>
+            这个小小的榜单已进账
+          </div>
+          <div
+            className="font-mono font-bold"
+            style={{
+              color: '#ff6a00',
+              fontSize: 'clamp(34px, 6vw, 46px)',
+              lineHeight: 1.15,
+              margin: '6px 0',
+              fontVariantNumeric: 'tabular-nums',
+              letterSpacing: '-0.02em',
+            }}
+            aria-label={`自上线以来已进账 ${formatMoney(lifetime)}`}
+          >
+            {formatMoney(lifetime)}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}>自上线以来</div>
+        </section>
+      )}
 
       {/* 机制说明 */}
       <p className="mt-3 text-[13px]" style={{ color: 'var(--muted)' }}>
@@ -274,15 +328,60 @@ export default function Leaderboard({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span
-                className="font-mono text-xl font-semibold"
-                style={{ width: '40px', color: i < 3 ? 'var(--accent)' : 'var(--meta)' }}
-              >
-                {i + 1}
-              </span>
+              {/* 排名徽章：前三名金银铜圆形 */}
+              <div className="flex shrink-0 items-center justify-center" style={{ width: 48 }}>
+                {i < 3 ? (
+                  <div
+                    className="flex items-center justify-center rounded-full font-mono font-extrabold"
+                    style={{
+                      width: 44,
+                      height: 44,
+                      fontSize: 20,
+                      background:
+                        i === 0
+                          ? 'linear-gradient(135deg, #ffd54f, #ffa000)'
+                          : i === 1
+                          ? 'linear-gradient(135deg, #e8eaed, #9aa0a6)'
+                          : 'linear-gradient(135deg, #d2956b, #8a5a2b)',
+                      color: i === 1 ? '#2a2a2a' : '#fff',
+                      boxShadow: '0 2px 10px rgba(0,0,0,.18)',
+                      textShadow: i === 1 ? 'none' : '0 1px 1px rgba(0,0,0,.18)',
+                    }}
+                    aria-label={`第 ${i + 1} 名`}
+                  >
+                    {i + 1}
+                  </div>
+                ) : (
+                  <span
+                    className="font-mono text-[22px] font-semibold"
+                    style={{ color: 'var(--meta)' }}
+                  >
+                    {i + 1}
+                  </span>
+                )}
+              </div>
+
+              {/* 工具图标（iconUrl 或域名 favicon 兜底） */}
+              {iconSrcFor(l) && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={iconSrcFor(l)}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="shrink-0 rounded-lg"
+                  style={{
+                    background: 'var(--surface-warm)',
+                    border: '1px solid var(--border)',
+                    objectFit: 'contain',
+                  }}
+                />
+              )}
+
+              {/* 名称 + 描述 + 点击/时间徽章 */}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-[15px] font-medium">{l.name}</span>
+                  <span className="truncate text-[15px] font-semibold">{l.name}</span>
                   <a
                     href={`/api/v1/click/${l.id}`}
                     target="_blank"
@@ -299,34 +398,57 @@ export default function Leaderboard({
                     {l.description}
                   </p>
                 )}
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span
+                    className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[12px]"
+                    style={{
+                      background: 'var(--surface-warm)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--fg-2)',
+                    }}
+                  >
+                    <MousePointerClick size={12} aria-hidden />
+                    {l.totalClicks.toLocaleString('zh-CN')}
+                  </span>
+                  <span
+                    className="inline-flex items-center gap-1 text-[12px]"
+                    style={{ color: 'var(--meta)' }}
+                  >
+                    <Timer size={12} aria-hidden />
+                    {timeAgo(new Date(l.lastBidAt).toISOString())}
+                  </span>
+                </div>
               </div>
-              <div className="hidden items-center gap-1 text-[13px] sm:flex" style={{ color: 'var(--muted)' }}>
-                <MousePointerClick size={13} aria-hidden />
-                {l.totalClicks}
-              </div>
-              <div className="text-right">
+
+              {/* 大号金额 + 加价按钮 */}
+              <div className="flex shrink-0 flex-col items-end gap-2">
                 <div
-                  className="font-mono text-[17px] font-semibold"
-                  style={{ letterSpacing: '-0.01em', color: 'var(--fg-2)' }}
+                  className="font-mono font-extrabold"
+                  style={{
+                    fontSize: i < 3 ? 'clamp(24px, 4vw, 30px)' : 'clamp(20px, 3vw, 24px)',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.02em',
+                    color: i < 3 ? '#ff6a00' : 'var(--fg-2)',
+                    fontVariantNumeric: 'tabular-nums',
+                    textShadow: i < 3 ? '0 0 12px rgba(255,106,0,.18)' : 'none',
+                  }}
                 >
                   {formatMoney(l.bidAmount)}
                 </div>
-                <div className="text-[11px]" style={{ color: 'var(--meta)' }}>
-                  {timeAgo(new Date(l.lastBidAt).toISOString())}
-                </div>
+                <button
+                  onClick={() => setBidTarget(l)}
+                  className="flex items-center gap-1.5 rounded-lg text-[13px] font-semibold transition-transform hover:-translate-y-0.5"
+                  style={{
+                    background: 'var(--accent)',
+                    color: 'var(--accent-on)',
+                    padding: '8px 16px',
+                    boxShadow: '0 2px 8px rgba(37,99,235,.25)',
+                  }}
+                >
+                  <TrendingUp size={14} aria-hidden />
+                  加价
+                </button>
               </div>
-              <button
-                onClick={() => setBidTarget(l)}
-                className="flex shrink-0 items-center gap-1.5 rounded-lg text-[13px] font-medium transition-colors"
-                style={{
-                  background: 'var(--accent)',
-                  color: 'var(--accent-on)',
-                  padding: '8px 14px',
-                }}
-              >
-                <TrendingUp size={14} aria-hidden />
-                竞价
-              </button>
             </div>
           </article>
         ))}
