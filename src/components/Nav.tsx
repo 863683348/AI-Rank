@@ -4,18 +4,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Trophy } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import LangSwitcher from './LangSwitcher';
+import { t, useClientLocale } from '@/lib/i18n/dict';
 
-const LINKS = [
-  { href: '/', label: '榜单' },
-  { href: '/categories', label: '分类' },
-  { href: '/stats', label: '实时统计' },
-  { href: '/rules', label: '规则' },
-  { href: '/faq', label: '常见QA' },
-  { href: '/contact', label: '联系我' },
+const LINKS: { href: string; labelKey: 'nav.home' | 'nav.categories' | 'nav.rules' | 'nav.faq' | 'nav.contact' }[] = [
+  { href: '/', labelKey: 'nav.home' },
+  { href: '/categories', labelKey: 'nav.categories' },
+  { href: '/rules', labelKey: 'nav.rules' },
+  { href: '/faq', labelKey: 'nav.faq' },
+  { href: '/contact', labelKey: 'nav.contact' },
 ];
 
 export default function Nav() {
   const pathname = usePathname();
+  const locale = useClientLocale();
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
@@ -36,7 +38,7 @@ export default function Nav() {
           padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
-          gap: '16px',
+          gap: '12px',
         }}
       >
         <Link
@@ -55,6 +57,7 @@ export default function Nav() {
         </Link>
 
         <nav
+          className="nav-row"
           style={{
             display: 'flex',
             gap: '4px',
@@ -82,13 +85,14 @@ export default function Nav() {
                   transform: active ? 'translateY(-1px)' : 'none',
                 }}
               >
-                {l.label}
+                {t(l.labelKey, locale)}
               </Link>
             );
           })}
         </nav>
 
-        <div style={{ flexShrink: 0 }}>
+        <div style={{ flexShrink: 0, display: 'flex', gap: 8, alignItems: 'center' }}>
+          <LangSwitcher />
           <ThemeToggle />
         </div>
       </div>
