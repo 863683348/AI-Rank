@@ -69,6 +69,7 @@ export default function Nav() {
               <Link
                 key={l.href}
                 href={l.href}
+                prefetch
                 style={{
                   textDecoration: 'none',
                   fontSize: 13,

@@ -17,6 +17,7 @@ import {
 import QRCode from 'qrcode';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
 import { CATEGORIES } from '@/lib/categories';
+import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
 import Link from 'next/link';
 
 type Listing = {
@@ -96,7 +97,21 @@ function Countdown() {
   const m = Math.floor((ms % 3600_000) / 60_000);
   const s = Math.floor((ms % 60_000) / 1000);
   return (
-    <span className="font-mono text-[13px]" style={{ color: 'var(--warn)' }}>
+    <span
+      className="font-mono"
+      style={{
+        fontSize: 18,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        color: 'var(--warn)',
+        padding: '4px 10px',
+        borderRadius: 8,
+        background: 'rgba(245, 158, 11, 0.12)',
+        border: '1px solid rgba(245, 158, 11, 0.35)',
+        textShadow: '0 0 8px rgba(245, 158, 11, 0.35)',
+        fontVariantNumeric: 'tabular-nums',
+      }}
+    >
       {String(h).padStart(2, '0')}:{String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
     </span>
   );
@@ -116,20 +131,22 @@ export default function Leaderboard({
   const [lifetime, setLifetime] = useState<number | null>(null);
   const pulseRef = useRef<Set<string>>(new Set());
 
-  // SSE 实时榜单
+  // SSE 实时榜单（共享单例）
   useEffect(() => {
-    const es = new EventSource('/api/v1/stream');
-    es.addEventListener('open', () => setLive(true));
-    es.addEventListener('board', (e) => {
-      const data = JSON.parse((e as MessageEvent).data) as { listings: Listing[] };
+    const offBoard = subscribeBoard((data) => {
       const prev = new Map(board.map((l) => [l.id, l.bidAmount]));
       pulseRef.current = new Set(
         data.listings.filter((l) => prev.get(l.id) !== l.bidAmount).map((l) => l.id)
       );
       setBoard(data.listings);
     });
-    es.addEventListener('error', () => setLive(false));
-    return () => es.close();
+    const offLive = subscribeLive(() => setLive(true));
+    const offError = subscribeError(() => setLive(false));
+    return () => {
+      offBoard();
+      offLive();
+      offError();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

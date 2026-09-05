@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, MousePointerClick, TrendingUp, Trophy, Coins, RefreshCw } from 'lucide-react';
 import { formatMoney, timeAgo, msUntilMidnightBeijing } from '@/lib/format';
+import { subscribeBoard, subscribeLive, subscribeError } from '@/lib/sse';
 
 type Stats = {
   listings: number;
@@ -108,19 +109,19 @@ export default function LiveStats() {
     poll();
     const t = setInterval(poll, 4000);
 
-    const es = new EventSource('/api/v1/stream');
-    es.addEventListener('open', () => setLive(true));
-    es.addEventListener('board', (e) => {
-      const d = JSON.parse((e as MessageEvent).data) as { listings: { bidAmount: string }[] };
+    const offBoard = subscribeBoard((d) => {
       const ls = d.listings;
       setBoardCount(ls.length);
       setBoardTotal(ls.reduce((s, l) => s + parseFloat(l.bidAmount), 0));
     });
-    es.addEventListener('error', () => setLive(false));
+    const offLive = subscribeLive(() => setLive(true));
+    const offError = subscribeError(() => setLive(false));
 
     return () => {
       clearInterval(t);
-      es.close();
+      offBoard();
+      offLive();
+      offError();
     };
   }, []);
 
