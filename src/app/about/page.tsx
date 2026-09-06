@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ABOUT, ABOUT_META } from '@/lib/i18n/about';
 import { getServerLocale } from '@/lib/i18n/dict.server';
 import { breadcrumbJsonLd, FOUNDER, SITE_URL } from '@/lib/schema-org';
+import QrImage from '@/components/QrImage';
 
 export const dynamic = 'force-dynamic';
 
@@ -204,10 +205,9 @@ export default async function AboutPage() {
         </section>
 
         {/* ── 打赏区（请作者喝杯咖啡） ────────────────────────────────
-            个人收款码：图片位占位，把微信/支付宝收款码放到：
-              public/qr/wechat-pay.png
-              public/qr/alipay-pay.png
-            图片是否存在由浏览器本地兜底（破图也居中，不会塌版）。
+            个人收款码：把微信/支付宝收款码放到 public/qr/ 下，
+            文件名 wechat-pay + alipay-pay，扩展名 jpg/png/jpeg/webp 均可
+            （QrImage 组件自动兜底，无需改代码）。
         */}
         <section
           aria-labelledby="about-donate"
@@ -239,8 +239,8 @@ export default async function AboutPage() {
           >
             {(
               [
-                { key: 'wechat', label: c.donateWechatLabel, alt: c.donateImgAlt.wechat, src: '/qr/wechat-pay.png' },
-                { key: 'alipay', label: c.donateAlipayLabel, alt: c.donateImgAlt.alipay, src: '/qr/alipay-pay.png' },
+                { key: 'wechat', label: c.donateWechatLabel, alt: c.donateImgAlt.wechat, base: 'qr/wechat-pay' },
+                { key: 'alipay', label: c.donateAlipayLabel, alt: c.donateImgAlt.alipay, base: 'qr/alipay-pay' },
               ] as const
             ).map((card) => (
               <div
@@ -271,18 +271,7 @@ export default async function AboutPage() {
                     position: 'relative',
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={card.src}
-                    alt={card.alt}
-                    loading="lazy"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      display: 'block',
-                    }}
-                  />
+                  <QrImage base={card.base} alt={card.alt} />
                 </div>
                 <div
                   className="text-[13px] font-semibold"
