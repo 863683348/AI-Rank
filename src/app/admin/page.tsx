@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Loader2, Check, X, Lock, ExternalLink, ShieldCheck, RefreshCw, Search, Inbox } from 'lucide-react';
+import { Loader2, Check, X, Lock, ExternalLink, ShieldCheck, RefreshCw, Search, Inbox, Wrench } from 'lucide-react';
 
 type Item = {
   id: string;
@@ -39,6 +39,12 @@ export default function AdminPage() {
   const [searchInput, setSearchInput] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const tokenRef = useRef('');
+
+  // Waffo 自检
+  const [probeAmt, setProbeAmt] = useState('9.99');
+  const [probeBusy, setProbeBusy] = useState(false);
+  const [probe, setProbe] = useState<any>(null);
+  const [probeErr, setProbeErr] = useState('');
 
   const authHeader = () => ({ Authorization: `Bearer ${tokenRef.current}` });
 
@@ -97,6 +103,27 @@ export default function AdminPage() {
     setLoading(true);
     setErr('');
     load().catch((e) => setErr(e instanceof Error ? e.message : '鉴权失败')).finally(() => setLoading(false));
+  }
+
+  async function runWaffoProbe() {
+    if (!tokenRef.current) return;
+    setProbeBusy(true);
+    setProbeErr('');
+    setProbe(null);
+    try {
+      const res = await fetch('/api/v1/admin/test-waffo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify({ amount: probeAmt.trim() || '9.99' }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      setProbe(data);
+    } catch (e) {
+      setProbeErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setProbeBusy(false);
+    }
   }
 
   function toggleSelect(id: string) {
@@ -181,6 +208,64 @@ export default function AdminPage() {
           刷新
         </button>
       </div>
+
+      {/* Waffo 自检 */}
+      <details
+        className="mt-4 rounded-xl p-3"
+        style={{ background: 'var(--surface-warm)', border: '1px solid var(--border)' }}
+      >
+        <summary
+          className="flex cursor-pointer items-center gap-2 text-[13px] font-medium"
+          style={{ color: 'var(--fg)' }}
+        >
+          <Wrench size={14} style={{ color: 'var(--accent)' }} aria-hidden />
+          工具 · Waffo 连通性自检
+        </summary>
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <label className="text-[12px]" style={{ color: 'var(--muted)' }}>
+              金额 (USD)
+            </label>
+            <input
+              type="text"
+              value={probeAmt}
+              onChange={(e) => setProbeAmt(e.target.value)}
+              placeholder="9.99"
+              className="w-24 rounded-lg text-[13px] outline-none"
+              style={{ ...field, padding: '6px 10px' }}
+              aria-label="自检金额"
+            />
+            <button
+              onClick={runWaffoProbe}
+              disabled={probeBusy}
+              className="flex items-center gap-1.5 rounded-lg text-[13px] font-semibold disabled:opacity-50"
+              style={{ background: 'var(--accent)', color: 'var(--accent-on)', padding: '7px 14px' }}
+            >
+              {probeBusy ? <Loader2 size={13} className="animate-spin" aria-hidden /> : <Wrench size={13} aria-hidden />}
+              运行诊断
+            </button>
+            {probeErr && (
+              <span className="text-[12px]" style={{ color: 'var(--danger)' }}>
+                {probeErr}
+              </span>
+            )}
+          </div>
+          {probe && (
+            <pre
+              className="overflow-auto rounded-lg p-3 text-[11.5px] leading-relaxed"
+              style={{
+                background: 'var(--surface)',
+                border: '1px solid var(--border)',
+                color: 'var(--fg-2)',
+                maxHeight: '420px',
+                fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace',
+              }}
+            >
+              {JSON.stringify(probe, null, 2)}
+            </pre>
+          )}
+        </div>
+      </details>
 
       {/* 状态切换 */}
       <div className="mt-4 flex gap-1.5">
