@@ -140,9 +140,17 @@ export async function POST(req: NextRequest) {
     );
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (msg.includes('uniq_listings_url')) {
+    // Drizzle 把底层 pg 错误包成 DrizzleQueryError，message 只含 SQL 文本。
+    // 真实的 unique violation 在 e.cause.message 里（如 uniq_listings_url），
+    // 这里把 cause.message 也拼进来匹配。
+    const cause = e instanceof Error && 'cause' in e ? (e as { cause?: { message?: string; code?: string } }).cause : null;
+    const causeMsg = cause?.message ?? '';
+    const pgCode = cause?.code ?? (e as { code?: string })?.code;
+    const combined = `${msg} ${causeMsg}`;
+    if (combined.includes('uniq_listings_url') || pgCode === '23505') {
       return NextResponse.json({ error: '该 URL 已在榜单，请直接加价' }, { status: 409 });
     }
-    return NextResponse.json({ error: '创建失败' }, { status: 500 });
+    console.error('[listings POST] unhandled:', msg, '| cause:', causeMsg);
+    return NextResponse.json({ error: '创建失败', detail: msg }, { status: 500 });
   }
 }
