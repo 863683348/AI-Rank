@@ -4,7 +4,6 @@ import { listings, bids } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { createCheckoutSession } from '@/lib/waffo';
 import { validateUrl, scanSafety, decideStatus } from '@/lib/listingGuard';
-import { notifyNewPending } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,8 +62,8 @@ export async function POST(req: NextRequest) {
   const descSafety = scanSafety(body.description ?? '');
   if (!descSafety.ok) return NextResponse.json({ error: descSafety.reason ?? '描述含违规内容' }, { status: 400 });
 
-  // 阶段2：可信域名自动放行，其余落人工审核（真正兜底闸门在 /admin）
-  const { status, verified } = decideStatus(url);
+  // 阶段2：V1.3 提交即上榜 —— 硬校验通过后一律 approved + 立即支付（违规靠 admin 事后下架）
+  const { verified } = decideStatus(url);
 
   // 同 URL 幂等：数据库唯一索引 uniq_listings_url 兜底，冲突时 409 引导加价
   try {
@@ -75,28 +74,12 @@ export async function POST(req: NextRequest) {
         name,
         description: body.description?.slice(0, 200) ?? null,
         iconUrl: body.iconUrl ?? null,
-        bidAmount: status === 'approved' ? amount.toFixed(2) : '1.00',
-        lifetimeAmount: status === 'approved' ? amount.toFixed(2) : '1.00',
-        status,
+        bidAmount: amount.toFixed(2),
+        lifetimeAmount: amount.toFixed(2),
+        status: 'approved',
         verified,
       })
       .returning();
-
-    // 待人工审核：不创建支付，提示等待审核
-    if (status === 'pending') {
-      // 通知审核人（失败不影响主流程，notify 内部 try/catch）
-      void notifyNewPending({
-        listingId: listing.id,
-        name,
-        url,
-        category: body.category,
-      });
-      return NextResponse.json({
-        status: 'pending',
-        message: '已提交，待人工审核。审核通过后即可支付上 C 位，我们会尽快处理。',
-        listingId: listing.id,
-      });
-    }
 
     const [bid] = await db
       .insert(bids)

@@ -100,9 +100,12 @@ export function isTrustedDomain(url: string): boolean {
   return false;
 }
 
-/** 决定新条目初始状态：可信域名 → approved；否则 pending 待人工审核 */
-export function decideStatus(url: string): { status: 'approved' | 'pending'; verified: boolean } {
-  return isTrustedDomain(url)
-    ? { status: 'approved', verified: true }
-    : { status: 'pending', verified: false };
+/**
+ * 决定新条目初始状态：V1.3「提交即付费即上榜」——
+ * 通过阶段1 硬校验（validateUrl/scanSafety）的域名一律 approved + 立即支付，
+ * 不再落人工审核。verified 仅标记是否命中可信白名单（供前端展示认证徽章）。
+ * 违规兜底改为：admin 事后下架（reject）。
+ */
+export function decideStatus(url: string): { status: 'approved'; verified: boolean } {
+  return { status: 'approved', verified: isTrustedDomain(url) };
 }

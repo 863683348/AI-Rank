@@ -34,7 +34,7 @@ export default function AdminPage() {
   const [err, setErr] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [batchBusy, setBatchBusy] = useState(false);
-  const [status, setStatus] = useState<StatusFilter>('pending');
+  const [status, setStatus] = useState<StatusFilter>('approved'); // V1.3 提交即上榜：默认看已上榜单，pending 仅历史数据
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [selected, setSelected] = useState<Set<string>>(new Set());
