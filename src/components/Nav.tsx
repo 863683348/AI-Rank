@@ -8,9 +8,10 @@ import LangSwitcher from './LangSwitcher';
 import { t } from '@/lib/i18n/dict';
 import { useClientLocale } from '@/lib/i18n/dict.client';
 
-const LINKS: { href: string; labelKey: 'nav.home' | 'nav.categories' | 'nav.rules' | 'nav.faq' | 'nav.contact' | 'nav.about' }[] = [
+const LINKS: { href: string; labelKey: 'nav.home' | 'nav.categories' | 'nav.stats' | 'nav.rules' | 'nav.faq' | 'nav.contact' | 'nav.about' }[] = [
   { href: '/', labelKey: 'nav.home' },
   { href: '/categories', labelKey: 'nav.categories' },
+  { href: '/stats', labelKey: 'nav.stats' },
   { href: '/rules', labelKey: 'nav.rules' },
   { href: '/faq', labelKey: 'nav.faq' },
   { href: '/about', labelKey: 'nav.about' },

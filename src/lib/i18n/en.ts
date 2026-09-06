@@ -13,6 +13,7 @@ import type { DictKey } from './zh';
 export const en: Partial<Record<DictKey, string>> = {
   'nav.home': 'Home',
   'nav.categories': 'Categories',
+  'nav.stats': 'Live Stats',
   'nav.rules': 'Rules',
   'nav.faq': 'FAQ',
   'nav.contact': 'Contact',

@@ -15,6 +15,7 @@ export const zh = {
   // 导航
   'nav.home': '首页',
   'nav.categories': '分类榜单',
+  'nav.stats': '实时统计',
   'nav.rules': '榜单规则',
   'nav.faq': '常见问题',
   'nav.contact': '联系我',
