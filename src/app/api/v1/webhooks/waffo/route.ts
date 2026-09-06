@@ -80,10 +80,13 @@ async function handleOrderCompleted(evt: Record<string, unknown>) {
       await db
         .update(listings)
         .set({
+          // V1.3.1：listing 初始 bidAmount=0（未支付不占榜），首笔确认累加即不重复；
+          // 同时置 paid=true —— 支付门控放行，进榜单可见
           bidAmount: sql`${listings.bidAmount} + ${amountStr}`,
           lifetimeAmount: sql`${listings.lifetimeAmount} + ${amountStr}`,
           lastBidAt: sql`now() AT TIME ZONE 'Asia/Shanghai'`,
           boardVersion: sql`${listings.boardVersion} + 1`,
+          paid: true,
         })
         .where(eq(listings.id, actualListingId));
     }

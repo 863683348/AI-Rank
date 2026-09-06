@@ -25,7 +25,7 @@ export default async function TopicPage({ slug }: { slug: string }) {
       lastBidAt: listings.lastBidAt,
     })
     .from(listings)
-    .where(and(eq(listings.category, slug), eq(listings.status, 'approved')))
+    .where(and(eq(listings.category, slug), eq(listings.status, 'approved'), eq(listings.paid, true)))
     .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
     .limit(100);
 

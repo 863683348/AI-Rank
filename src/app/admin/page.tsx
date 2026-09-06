@@ -13,6 +13,7 @@ type Item = {
   bidAmount: number;
   verified: boolean;
   status: 'pending' | 'approved' | 'rejected';
+  paid: boolean;
   reviewReason: string | null;
   createdAt: string;
   updatedAt: string;
@@ -440,6 +441,18 @@ export default function AdminPage() {
                             }}
                           >
                             {STATUS_LABEL[it.status]}
+                          </span>
+                        )}
+                        {it.status === 'approved' && (
+                          <span
+                            className="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium"
+                            style={{
+                              background: it.paid ? 'rgba(245,158,11,.15)' : 'rgba(100,116,139,.15)',
+                              color: it.paid ? 'var(--warn)' : 'var(--meta)',
+                              border: `1px solid ${it.paid ? 'rgba(245,158,11,.35)' : 'rgba(100,116,139,.25)'}`,
+                            }}
+                          >
+                            {it.paid ? '已支付 · 在榜' : '未支付 · 隐藏'}
                           </span>
                         )}
                       </div>

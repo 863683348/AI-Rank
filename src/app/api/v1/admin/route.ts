@@ -26,6 +26,7 @@ const BASE_SELECT = {
   bidAmount: listings.bidAmount,
   verified: listings.verified,
   status: listings.status,
+  paid: listings.paid,
   reviewReason: listings.reviewReason,
   createdAt: listings.createdAt,
   updatedAt: listings.updatedAt,

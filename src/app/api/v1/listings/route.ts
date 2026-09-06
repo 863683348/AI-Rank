@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { listings, bids } from '@/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 import { createCheckoutSession } from '@/lib/waffo';
 import { validateUrl, scanSafety, decideStatus } from '@/lib/listingGuard';
 
@@ -23,7 +23,8 @@ export async function GET() {
       verified: listings.verified,
     })
     .from(listings)
-    .where(eq(listings.status, 'approved'))
+    // V1.3.1 双门控：审核通过（approved）且至少一笔支付确认（paid）才上榜
+    .where(and(eq(listings.status, 'approved'), eq(listings.paid, true)))
     .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
     .limit(100);
 
@@ -74,10 +75,12 @@ export async function POST(req: NextRequest) {
         name,
         description: body.description?.slice(0, 200) ?? null,
         iconUrl: body.iconUrl ?? null,
-        bidAmount: amount.toFixed(2),
-        lifetimeAmount: amount.toFixed(2),
+        // 金额 0 占位：未支付前不占榜位；支付确认（webhook）后累加真实金额并置 paid=true
+        bidAmount: '0.00',
+        lifetimeAmount: '0.00',
         status: 'approved',
         verified,
+        paid: false,
       })
       .returning();
 
@@ -131,6 +134,38 @@ export async function POST(req: NextRequest) {
     const pgCode = cause?.code ?? (e as { code?: string })?.code;
     const combined = `${msg} ${causeMsg}`;
     if (combined.includes('uniq_listings_url') || pgCode === '23505') {
+      // V1.3.1：同 URL 已存在但从未支付成功（approved + 未 paid，隐藏态）
+      // → 视为「重试首次支付」，不 409 卡死，直接为现有条目建新 bid 续付
+      const [exist] = await db
+        .select({ id: listings.id, status: listings.status, paid: listings.paid })
+        .from(listings)
+        .where(eq(listings.url, url))
+        .limit(1);
+      if (exist && exist.status === 'approved' && !exist.paid) {
+        const [bid] = await db
+          .insert(bids)
+          .values({ listingId: exist.id, amount: amount.toFixed(2), paymentMethod: 'waffo' })
+          .returning();
+        const productId = process.env.WAFFO_PRODUCT_ID ?? '';
+        if (!productId) {
+          await db.delete(bids).where(eq(bids.id, bid.id));
+          return NextResponse.json({ error: 'Waffo 未配置 WAFFO_PRODUCT_ID' }, { status: 500 });
+        }
+        try {
+          const result = await createCheckoutSession({
+            productId,
+            buyerIdentity: bid.id,
+            amount: amount.toFixed(2),
+            metadata: { listingId: exist.id, bidId: bid.id, amount: amount.toFixed(2), name },
+          });
+          return NextResponse.json({ checkoutUrl: result.checkoutUrl, listingId: exist.id, bidId: bid.id, retry: true });
+        } catch (e2) {
+          const msg2 = e2 instanceof Error ? e2.message : String(e2);
+          console.error('[listings POST] retry checkout failed:', msg2);
+          await db.delete(bids).where(eq(bids.id, bid.id));
+          return NextResponse.json({ error: '支付通道暂时不可用，请稍后重试', detail: msg2 }, { status: 502 });
+        }
+      }
       return NextResponse.json({ error: '该 URL 已在榜单，请直接加价' }, { status: 409 });
     }
     console.error('[listings POST] unhandled:', msg, '| cause:', causeMsg);

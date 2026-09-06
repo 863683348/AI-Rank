@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/db';
 import { listings } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://toolsrank.lol';
 
@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         updatedAt: listings.updatedAt,
       })
       .from(listings)
-      .where(eq(listings.status, 'approved'))
+      .where(and(eq(listings.status, 'approved'), eq(listings.paid, true)))
       .limit(1000);
 
     const listingPages: MetadataRoute.Sitemap = rows.map((r) => ({

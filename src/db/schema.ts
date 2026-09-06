@@ -6,8 +6,10 @@ import { pgTable, uuid, text, decimal, integer, timestamp, date, bigint, boolean
  * lifetime_amount: 累计投入（不受重置影响）
  * last_bid_at: 同额时后出价者靠前的排序依据
  * board_version: SSE 推送依据，任何竞价生效 +1
- * status: pending(待审核) | approved(在榜) | rejected(被拒)
- * verified: 是否命中可信源（域名白名单/目录）自动放行
+ * status: approved(审核通过) | rejected(被管理员下线)
+ * paid: 支付门控 —— 至少一笔 confirmed 支付才进榜单可见；
+ *       status 与 paid 是独立两维：审核不过（rejected）即使付了钱也不显示
+ * verified: 是否命中可信源（域名白名单/目录）
  */
 export const listings = pgTable('listings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -16,8 +18,8 @@ export const listings = pgTable('listings', {
   description: text('description'),
   iconUrl: text('icon_url'),
   category: text('category').notNull().default('ai-tools'),
-  bidAmount: decimal('bid_amount', { precision: 10, scale: 2 }).notNull().default('1.00'),
-  lifetimeAmount: decimal('lifetime_amount', { precision: 10, scale: 2 }).notNull().default('1.00'),
+  bidAmount: decimal('bid_amount', { precision: 10, scale: 2 }).notNull().default('0.00'),
+  lifetimeAmount: decimal('lifetime_amount', { precision: 10, scale: 2 }).notNull().default('0.00'),
   lastBidAt: timestamp('last_bid_at', { withTimezone: true }).notNull().defaultNow(),
   totalClicks: integer('total_clicks').notNull().default(0),
   ownerEmail: text('owner_email'),
@@ -27,6 +29,7 @@ export const listings = pgTable('listings', {
   status: text('status').notNull().default('pending'),
   reviewReason: text('review_reason'),
   verified: boolean('verified').notNull().default(false),
+  paid: boolean('paid').notNull().default(false),
 }, (t) => [
   uniqueIndex('uniq_listings_url').on(t.url),
   index('idx_listings_rank').on(t.bidAmount, t.lastBidAt),

@@ -44,7 +44,7 @@ export default async function Home({
           lastBidAt: listings.lastBidAt,
         })
         .from(listings)
-        .where(and(eq(listings.category, filter), eq(listings.status, 'approved')))
+        .where(and(eq(listings.category, filter), eq(listings.status, 'approved'), eq(listings.paid, true)))
         .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
         .limit(100)
     : await db
@@ -60,7 +60,7 @@ export default async function Home({
           lastBidAt: listings.lastBidAt,
         })
         .from(listings)
-        .where(eq(listings.status, 'approved'))
+        .where(and(eq(listings.status, 'approved'), eq(listings.paid, true)))
         .orderBy(desc(listings.bidAmount), desc(listings.lastBidAt))
         .limit(100);
 
