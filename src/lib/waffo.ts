@@ -60,7 +60,7 @@ export async function createCheckoutSession(params: {
   metadata?: Record<string, string>;
 }): Promise<{ checkoutUrl: string }> {
   const client = getClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://toolsrank.ai';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://toolsrank.lol';
 
   // 构造 priceSnapshot：只在 amount 存在时启用自定义金额
   const priceSnapshot =
