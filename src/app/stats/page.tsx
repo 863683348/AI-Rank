@@ -1,6 +1,14 @@
+import type { Metadata } from 'next';
 import LiveStats from '@/components/LiveStats';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: '实时统计 — 在榜金额与出价动态',
+  description:
+    'ToolsRank 实时统计：当前在榜金额、累计投入与出价动态一目了然。每日 00:00（北京时间）在榜金额重置为 $1，累计数据永久保留、公开可审计。',
+  alternates: { canonical: '/stats' },
+};
 
 export default function StatsPage() {
   return (

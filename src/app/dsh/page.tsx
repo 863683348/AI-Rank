@@ -11,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t?.metaTitle ?? 'DSH 生态榜',
     description: t?.metaDescription,
+    alternates: { canonical: `/${slug}` },
   };
 }
 

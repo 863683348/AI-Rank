@@ -51,13 +51,12 @@ export const metadata: Metadata = {
     title: 'ToolsRank — C 位的显眼包',
     description: 'AI 工具竞价排行榜，金额即名次。',
   },
-  alternates: {
-    canonical: SITE_URL,
-    languages: {
-      'zh-CN': SITE_URL,
-      'en': `${SITE_URL}/en`,
-    },
-  },
+  // 刻意不在此声明 alternates：
+  // 1) layout 级的 canonical 会被「没有自设 canonical」的子页面整页继承，
+  //    导致 /gpt6、/dsh 等页面的 canonical 指向首页，被判为重复内容而不被索引；
+  // 2) 本站 i18n 是 localStorage 客户端切换，不存在 /en 这类独立 URL，
+  //    声明 hreflang="en" 会指向 404（GSC 报「无效的 hreflang」）。
+  // 结论：canonical 一律由各页面自己声明（'/'、'/about'、'/gpt6' …）。
 };
 
 export const viewport: Viewport = {

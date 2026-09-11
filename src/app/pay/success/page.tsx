@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CheckCircle2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
+
+// 支付结果页：无独立检索价值，明确排除索引。
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function PaySuccess({
   searchParams,
